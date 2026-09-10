@@ -55,6 +55,7 @@ IMPLEMENT_MODULE(FUEMCPBridge53Module, UE_MCP_Bridge53)
 #include "../../UE_MCP_Bridge/Private/Handlers/BlueprintHandlers.cpp"
 #include "../../UE_MCP_Bridge/Private/Handlers/BlueprintHandlers_Graph.cpp"
 #include "../../UE_MCP_Bridge/Private/Handlers/BlueprintHandlers_Functions.cpp"
+#include "../../UE_MCP_Bridge/Private/Handlers/BlueprintHandlers_Search.cpp"
 
 FString FBlueprintHandlers::PinTypeSpec(const FEdGraphPinType& PinType, bool& bOutRoundTrips)
 {
