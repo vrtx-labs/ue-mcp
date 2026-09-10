@@ -56,6 +56,18 @@ IMPLEMENT_MODULE(FUEMCPBridge53Module, UE_MCP_Bridge53)
 #include "../../UE_MCP_Bridge/Private/Handlers/BlueprintHandlers_Graph.cpp"
 #include "../../UE_MCP_Bridge/Private/Handlers/BlueprintHandlers_Functions.cpp"
 #include "../../UE_MCP_Bridge/Private/Handlers/BlueprintHandlers_Search.cpp"
+#include "../../UE_MCP_Bridge/Private/Handlers/BlueprintHandlers_Properties.cpp"
+#include "../../UE_MCP_Bridge/Private/Handlers/BlueprintHandlers_Depth.cpp"
+#include "../../UE_MCP_Bridge/Private/Handlers/BlueprintHandlers_Collision.cpp"
+#include "../../UE_MCP_Bridge/Private/Handlers/DiffHandlers.cpp"
+
+bool FBlueprintHandlers::ParsePinTypeSpec(const FString& TypeSpec, FEdGraphPinType& OutType, FString& OutError)
+{
+	OutType = MakePinType(TypeSpec);
+	if (OutType.PinCategory != NAME_None) return true;
+	OutError = FString::Printf(TEXT("Unrecognized type '%s'"), *TypeSpec);
+	return false;
+}
 
 FString FBlueprintHandlers::PinTypeSpec(const FEdGraphPinType& PinType, bool& bOutRoundTrips)
 {

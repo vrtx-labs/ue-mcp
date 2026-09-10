@@ -99,6 +99,13 @@ void FBlueprintHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 	Registry.RegisterHandler(TEXT("list_overridable_functions"), &ListOverridableFunctions);
 	Registry.RegisterHandler(TEXT("list_local_variables"), &ListLocalVariables);
 	Registry.RegisterHandler(TEXT("get_blueprint_variable_default"), &GetVariableDefault);
+	Registry.RegisterHandler(TEXT("read_component_properties"), &ReadComponentProperties);
+	Registry.RegisterHandler(TEXT("get_blueprint_component_property"), &GetComponentProperty);
+	Registry.RegisterHandler(TEXT("get_cdo_properties"), &GetCdoProperties);
+	Registry.RegisterHandler(TEXT("list_blueprint_interfaces"), &ListBlueprintInterfaces);
+	Registry.RegisterHandler(TEXT("list_graph_parameters"), &ListGraphParameters);
+	Registry.RegisterHandler(TEXT("get_blueprint_variable_metadata"), &GetBlueprintVariableMetadata);
+	Registry.RegisterHandler(TEXT("list_event_dispatchers"), &ListEventDispatchers);
 	Registry.RegisterHandler(TEXT("validate_blueprint"), &ValidateBlueprint);
 	return;
 	#endif

@@ -25,6 +25,10 @@
 #include "Misc/Char.h"
 #include "Async/Async.h"
 #include "Handlers/BlueprintHandlers.h"
+#if UE_MCP_BLUEPRINT53_CORE
+#include "Handlers/BlueprintHandlers_Collision.h"
+#include "Handlers/DiffHandlers.h"
+#endif
 #if !UE_MCP_BLUEPRINT53_CORE
 #include "Handlers/EditorHandlers.h"
 #include "Handlers/AssetHandlers.h"
@@ -165,6 +169,8 @@ FMCPBridgeServer::FMCPBridgeServer(int32 Port, const FString& InPortSource, bool
 	// The full module retains the complete category registration below.
 #if UE_MCP_BLUEPRINT53_CORE
 	FBlueprintHandlers::RegisterHandlers(HandlerRegistry);
+	FCollisionQueryHandlers::RegisterHandlers(HandlerRegistry);
+	FDiffHandlers::RegisterHandlers(HandlerRegistry);
 #else
 	// Register core handlers
 	FEditorHandlers::RegisterHandlers(HandlerRegistry);
