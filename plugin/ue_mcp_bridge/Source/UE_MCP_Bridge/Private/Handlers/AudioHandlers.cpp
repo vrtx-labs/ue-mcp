@@ -11,7 +11,7 @@
 #include "UObject/Package.h"
 #include "Misc/PackageName.h"
 #include "UObject/SavePackage.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "Sound/SoundCue.h"
 #include "Sound/SoundWave.h"
 #include "Factories/SoundCueFactoryNew.h"

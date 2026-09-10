@@ -23,7 +23,7 @@
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "UObject/UObjectGlobals.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 
 #include "NiagaraSystem.h"
 #include "NiagaraEmitter.h"

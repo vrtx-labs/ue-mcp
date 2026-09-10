@@ -56,7 +56,7 @@
 #include "HandlerRegistry.h"
 #include "HandlerUtils.h"
 
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "Engine/StaticMesh.h"
 #include "PhysicsEngine/AggregateGeom.h"
 #include "PhysicsEngine/BodySetup.h"

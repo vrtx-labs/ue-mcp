@@ -38,7 +38,7 @@
 #include "Dom/JsonValue.h"
 #include "Editor.h"
 #include "Editor/Transactor.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "Engine/Texture.h"
 #include "Engine/Texture2D.h"
 #include "Engine/TextureRenderTarget2D.h"

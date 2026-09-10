@@ -33,7 +33,7 @@
 #include "HAL/PlatformProcess.h"
 #include "HAL/PlatformTime.h"
 #include "Materials/MaterialInterface.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "RenderingThread.h"
 #include "Components/PrimitiveComponent.h"
 #include "PhysicsEngine/BodyInstance.h"

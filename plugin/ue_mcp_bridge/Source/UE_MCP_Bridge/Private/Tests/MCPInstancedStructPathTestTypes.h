@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "StructUtils/InstancedStruct.h"
+#include "InstancedStruct.h"
 #include "MCPInstancedStructPathTestTypes.generated.h"
 
 /** Reflected payload used only by the FInstancedStruct property-path tests. */

@@ -20,7 +20,7 @@
 #include "UObject/Package.h"
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "EditorFramework/AssetImportData.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/SkeletalMesh.h"

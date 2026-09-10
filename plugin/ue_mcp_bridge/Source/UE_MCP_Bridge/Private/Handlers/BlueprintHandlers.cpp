@@ -78,6 +78,18 @@
 
 void FBlueprintHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 {
+	#if UE_MCP_BLUEPRINT53_CORE
+	Registry.RegisterHandler(TEXT("read_blueprint"), &ReadBlueprint);
+	Registry.RegisterHandler(TEXT("compile_blueprint"), &CompileBlueprint);
+	Registry.RegisterHandler(TEXT("list_blueprint_variables"), &ListBlueprintVariables);
+	Registry.RegisterHandler(TEXT("read_blueprint_graph"), &ReadBlueprintGraph);
+	Registry.RegisterHandler(TEXT("read_blueprint_graph_summary"), &ReadBlueprintGraphSummary);
+	Registry.RegisterHandler(TEXT("get_blueprint_execution_flow"), &GetBlueprintExecutionFlow);
+	Registry.RegisterHandler(TEXT("get_blueprint_dependencies"), &GetBlueprintDependencies);
+	Registry.RegisterHandler(TEXT("validate_blueprint"), &ValidateBlueprint);
+	return;
+	#endif
+
 	constexpr float ReadBlueprintGraphTimeoutSeconds = 180.0f;
 	// #945: a first sweep on a cold project pays for every package load the
 	// registry could not rule out, which the default request timeout does not
@@ -3348,7 +3360,7 @@ TSharedPtr<FJsonValue> FBlueprintHandlers::FlushComponentTemplates(const TShared
 			Template->Modify();
 			Template->ClearFlags(RF_Public | RF_Standalone);
 			if (!Template->Rename(nullptr, GetTransientPackage(),
-				REN_DoNotDirty | REN_DontCreateRedirectors | REN_AllowPackageLinkerMismatch | REN_NonTransactional))
+				REN_DoNotDirty | REN_DontCreateRedirectors | REN_NonTransactional))
 			{
 				return MCPError(FString::Printf(TEXT("Failed to retire orphan component template: %s"), *Template->GetPathName()));
 			}

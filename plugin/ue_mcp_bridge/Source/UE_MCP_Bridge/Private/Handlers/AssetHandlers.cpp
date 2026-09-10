@@ -25,7 +25,7 @@
 #include "AssetExportTask.h"
 #include "UObject/UObjectGlobals.h"
 #include "UObject/UnrealType.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "EditorFramework/AssetImportData.h"
 #include "UObject/Package.h"
 #include "Misc/PackageName.h"

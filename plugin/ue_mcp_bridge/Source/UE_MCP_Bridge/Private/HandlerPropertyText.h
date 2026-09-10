@@ -178,7 +178,7 @@ namespace MCPPropertyText
 			int32 Total = H.Num();
 			for (FScriptMapHelper::FIterator It = H.CreateIterator(); It; ++It)
 			{
-				Total += CountMapPairs(MapProp->ValueProp, H.GetValuePtr(It), Depth + 1);
+				Total += CountMapPairs(MapProp->ValueProp, H.GetValuePtr(*It), Depth + 1);
 			}
 			return Total;
 		}

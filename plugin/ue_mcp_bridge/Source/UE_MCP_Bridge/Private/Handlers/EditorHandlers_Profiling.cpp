@@ -47,6 +47,8 @@
 
 #include "HandlerUtils.h"
 
+#if UE_MCP_HAS_5_4_API
+
 #include "Editor.h"
 #include "Editor/EditorEngine.h"
 #include "Editor/EditorPerformanceSettings.h"
@@ -1658,6 +1660,8 @@ TSharedPtr<FJsonValue> FEditorHandlers::StopStandaloneGame(const TSharedPtr<FJso
 		TEXT("Terminating a process cannot be undone. editor(launch_standalone) starts a NEW run rather than restoring this one."));
 	return MCPResult(Result);
 }
+
+#endif // UE_MCP_HAS_5_4_API
 
 // Undefined at the end of the translation unit: the module is a unity build,
 // so a file-scope macro would otherwise leak into every .cpp compiled after

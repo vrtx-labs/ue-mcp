@@ -24,7 +24,7 @@
 #include "UObject/StrongObjectPtr.h"
 
 #include "Chooser.h"
-#include "StructUtils/InstancedStruct.h"
+#include "InstancedStruct.h"
 #include "EditorAssetLibrary.h"
 #include "ScopedTransaction.h"
 #include "UObject/UnrealType.h"

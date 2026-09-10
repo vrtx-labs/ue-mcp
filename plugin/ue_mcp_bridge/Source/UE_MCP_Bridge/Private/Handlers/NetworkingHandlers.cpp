@@ -12,7 +12,7 @@
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "UObject/UnrealType.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 
 void FNetworkingHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 {

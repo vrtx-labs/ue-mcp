@@ -39,7 +39,7 @@
 #include "HandlerRegistry.h"
 #include "HandlerUtils.h"
 #include "HandlerAssetCreate.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 
 #include "Factories/Factory.h"
 

@@ -7,7 +7,7 @@
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Editor.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "Engine/DataAsset.h"
 #include "Misc/PackageName.h"
 #include "ScopedTransaction.h"

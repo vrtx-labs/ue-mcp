@@ -12,7 +12,7 @@
 #include "HandlerAssetCreate.h"
 #include "HandlerJsonProperty.h"
 #include "HandlerQuery.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 
 #include "Sound/SoundSubmix.h"
 #include "Sound/SoundSubmixSend.h"

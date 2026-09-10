@@ -8,7 +8,7 @@
 #include "IObjectChooser.h"
 #include "ObjectChooser_Asset.h"
 #include "ObjectChooser_Class.h"
-#include "StructUtils/InstancedStruct.h"
+#include "InstancedStruct.h"
 #include "EditorAssetLibrary.h"
 #include "UObject/UnrealType.h"
 #include "Misc/StringOutputDevice.h"

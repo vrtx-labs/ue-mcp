@@ -5,7 +5,7 @@
 #include "HandlerJsonProperty.h"
 #include "HandlerAssetCreate.h"
 #include "JsonSerializer.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "Modules/ModuleManager.h"
 #include "StateTree.h"
 #include "StateTreeReference.h"

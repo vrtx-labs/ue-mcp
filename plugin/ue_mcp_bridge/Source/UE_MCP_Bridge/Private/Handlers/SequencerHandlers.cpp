@@ -31,7 +31,7 @@
 #include "Tracks/MovieSceneEventTrack.h"
 #include "Tracks/MovieSceneFadeTrack.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "UObject/Package.h"
 #include "Editor.h"
 #include "Engine/World.h"

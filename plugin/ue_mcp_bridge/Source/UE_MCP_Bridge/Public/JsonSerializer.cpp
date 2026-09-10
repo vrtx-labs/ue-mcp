@@ -319,7 +319,7 @@ TSharedPtr<FJsonValue> FMCPJsonSerializer::SerializePropertyValue(const void* Va
 		FScriptSetHelper SetHelper(SetProp, Value);
 		for (FScriptSetHelper::FIterator It = SetHelper.CreateIterator(); It; ++It)
 		{
-			TSharedPtr<FJsonValue> ItemJson = SerializePropertyValue(SetHelper.GetElementPtr(It), SetProp->ElementProp);
+			TSharedPtr<FJsonValue> ItemJson = SerializePropertyValue(SetHelper.GetElementPtr(*It), SetProp->ElementProp);
 			if (ItemJson.IsValid())
 			{
 				JsonArray.Add(ItemJson);
@@ -343,8 +343,8 @@ TSharedPtr<FJsonValue> FMCPJsonSerializer::SerializePropertyValue(const void* Va
 			for (FScriptMapHelper::FIterator It = MapHelper.CreateIterator(); It; ++It)
 			{
 				MapJson->SetField(
-					KeyToFieldName(MapProp->KeyProp, MapHelper.GetKeyPtr(It)),
-					SerializePropertyValue(MapHelper.GetValuePtr(It), MapProp->ValueProp));
+					KeyToFieldName(MapProp->KeyProp, MapHelper.GetKeyPtr(*It)),
+					SerializePropertyValue(MapHelper.GetValuePtr(*It), MapProp->ValueProp));
 			}
 			return MakeShared<FJsonValueObject>(MapJson);
 		}
@@ -353,8 +353,8 @@ TSharedPtr<FJsonValue> FMCPJsonSerializer::SerializePropertyValue(const void* Va
 		for (FScriptMapHelper::FIterator It = MapHelper.CreateIterator(); It; ++It)
 		{
 			TSharedPtr<FJsonObject> PairJson = MakeShared<FJsonObject>();
-			PairJson->SetField(TEXT("key"), SerializePropertyValue(MapHelper.GetKeyPtr(It), MapProp->KeyProp));
-			PairJson->SetField(TEXT("value"), SerializePropertyValue(MapHelper.GetValuePtr(It), MapProp->ValueProp));
+			PairJson->SetField(TEXT("key"), SerializePropertyValue(MapHelper.GetKeyPtr(*It), MapProp->KeyProp));
+			PairJson->SetField(TEXT("value"), SerializePropertyValue(MapHelper.GetValuePtr(*It), MapProp->ValueProp));
 			Pairs.Add(MakeShared<FJsonValueObject>(PairJson));
 		}
 		return MakeShared<FJsonValueArray>(Pairs);

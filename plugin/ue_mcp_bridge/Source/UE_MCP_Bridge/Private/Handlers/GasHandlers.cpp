@@ -12,7 +12,7 @@
 #include "UObject/Package.h"
 #include "Misc/PackageName.h"
 #include "UObject/SavePackage.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "GameplayTagContainer.h"

@@ -52,7 +52,7 @@
 #include "AssetToolsModule.h"
 #include "IAssetTools.h"
 
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "Engine/AssetManager.h"
 #include "Engine/AssetManagerTypes.h"
 

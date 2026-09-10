@@ -15,7 +15,7 @@
 #include "BlueprintHandlers.h"
 #include "HandlerRegistry.h"
 #include "HandlerUtils.h"
-#include "StructUtils/UserDefinedStruct.h"
+#include "Engine/UserDefinedStruct.h"
 #include "Kismet2/StructureEditorUtils.h"
 #include "UserDefinedStructure/UserDefinedStructEditorData.h"
 #include "AssetRegistry/AssetRegistryModule.h"

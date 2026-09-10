@@ -20,7 +20,7 @@
 #include "Modules/ModuleManager.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetRegistry/AssetData.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "UObject/Class.h"

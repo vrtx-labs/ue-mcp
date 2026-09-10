@@ -22,7 +22,7 @@
 			"LoadingPhase": "PostConfigInit"
 		},
 		{
-			"Name": "UE_MCP_Bridge",
+			"Name": "UE_MCP_Bridge53",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit"
 		}
@@ -38,6 +38,10 @@
 		},
 		{
 			"Name": "EditorScriptingUtilities",
+			"Enabled": true
+		},
+		{
+			"Name": "StructUtils",
 			"Enabled": true
 		},
 		{
@@ -70,10 +74,6 @@
 		},
 		{
 			"Name": "Chooser",
-			"Enabled": true
-		},
-		{
-			"Name": "PropertyBindingUtils",
 			"Enabled": true
 		},
 		{

@@ -46,7 +46,7 @@
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "Editor.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "Factories/DataTableFactory.h"
 #include "Internationalization/StringTable.h"
 #include "Internationalization/StringTableCore.h"

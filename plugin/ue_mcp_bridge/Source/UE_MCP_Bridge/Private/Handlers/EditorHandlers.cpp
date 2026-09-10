@@ -20,7 +20,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "IPythonScriptPlugin.h"
@@ -257,6 +257,7 @@ void FEditorHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 	Registry.RegisterHandler(TEXT("get_transaction_history"), &GetTransactionHistory);
 	// Insights trace control, frame timing and standalone runs, in
 	// EditorHandlers_Profiling.cpp.
+#if UE_MCP_HAS_5_4_API
 	Registry.RegisterHandler(TEXT("start_insights_trace"), &StartInsightsTrace);
 	Registry.RegisterHandler(TEXT("stop_insights_trace"), &StopInsightsTrace);
 	Registry.RegisterHandler(TEXT("pause_insights_trace"), &PauseInsightsTrace);
@@ -273,6 +274,7 @@ void FEditorHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 	Registry.RegisterHandler(TEXT("launch_standalone_game"), &LaunchStandaloneGame);
 	Registry.RegisterHandler(TEXT("get_standalone_status"), &GetStandaloneStatus);
 	Registry.RegisterHandler(TEXT("stop_standalone_game"), &StopStandaloneGame);
+#endif
 	Registry.RegisterHandler(TEXT("reload_handlers"), &ReloadHandlers);
 	// save_asset is owned by FAssetHandlers (#768: adds force, file size, mtime).
 	// Registering it here too meant the winner was decided by registration

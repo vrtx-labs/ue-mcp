@@ -17,7 +17,7 @@
 #include "UObject/UObjectGlobals.h"
 #include "Misc/PackageName.h"
 #include "LandscapeGrassType.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 void FFoliageHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)

@@ -6,7 +6,7 @@
 #include "HandlerUtils.h"
 #include "HandlerJsonProperty.h"
 #include "JsonSerializer.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "Engine/Blueprint.h"
 #include "UObject/Package.h"
 

@@ -11,7 +11,7 @@
 #include "UObject/Package.h"
 #include "Misc/PackageName.h"
 #include "UObject/SavePackage.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "WidgetBlueprint.h"
 #include "WidgetBlueprintFactory.h"
 #include "Blueprint/UserWidget.h"

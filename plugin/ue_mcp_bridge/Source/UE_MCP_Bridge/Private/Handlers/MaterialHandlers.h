@@ -4,6 +4,8 @@
 #include "Dom/JsonValue.h"
 #include "Dom/JsonObject.h"
 
+class UMaterialInstanceConstant;
+
 class FMaterialHandlers
 {
 public:

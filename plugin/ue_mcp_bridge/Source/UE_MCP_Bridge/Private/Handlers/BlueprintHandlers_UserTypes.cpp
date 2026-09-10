@@ -38,7 +38,7 @@
 
 #include "Engine/UserDefinedEnum.h"
 #include "Kismet2/EnumEditorUtils.h"
-#include "StructUtils/UserDefinedStruct.h"
+#include "Engine/UserDefinedStruct.h"
 #include "Kismet2/StructureEditorUtils.h"
 #include "UserDefinedStructure/UserDefinedStructEditorData.h"
 #include "EdGraph/EdGraphNode.h"

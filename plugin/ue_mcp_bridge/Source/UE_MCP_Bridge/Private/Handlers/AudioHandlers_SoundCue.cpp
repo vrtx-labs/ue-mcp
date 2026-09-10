@@ -11,7 +11,7 @@
 #include "HandlerUtils.h"
 #include "HandlerAssetCreate.h"
 #include "HandlerJsonProperty.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "Factories/SoundCueFactoryNew.h"
 
 #include "Sound/SoundCue.h"

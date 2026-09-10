@@ -29,7 +29,7 @@
 #if __has_include("PhysicsEngine/SkeletalBodySetup.h")
 #include "PhysicsEngine/SkeletalBodySetup.h"
 #endif
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "Factories/AnimBlueprintFactory.h"
 #include "Factories/AnimMontageFactory.h"
 #include "Factories/BlendSpaceFactoryNew.h"

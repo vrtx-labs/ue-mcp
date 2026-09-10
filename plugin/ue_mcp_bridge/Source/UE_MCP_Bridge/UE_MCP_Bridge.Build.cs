@@ -90,6 +90,9 @@ public class UE_MCP_Bridge : ModuleRules
 	public UE_MCP_Bridge(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+		// UE 5.3 exposes Editor Scripting Utility headers below the plugin source
+		// directory, while newer engines resolve the prefixed includes directly.
+		PrivateIncludePaths.Add(System.IO.Path.Combine(EngineDirectory, "Plugins", "Editor", "EditorScriptingUtilities", "Source"));
 
 		PublicDependencyModuleNames.AddRange(
 			new string[]
@@ -184,7 +187,6 @@ public class UE_MCP_Bridge : ModuleRules
 				"PCGEditor",
 				"PoseSearch",
 				"PoseSearchEditor",
-				"PropertyBindingUtils",
 				"PropertyEditor",
 				// IPluginManager, IProjectManager and FProjectDescriptor, which
 				// project(enable_plugin) writes and widget(audit_commonui) reads.
@@ -201,6 +203,7 @@ public class UE_MCP_Bridge : ModuleRules
 				"StateTreeModule",
 				"StateTreeEditorModule",
 				"StaticMeshDescription",
+				"StructUtils",
 				"ClothingSystemRuntimeCommon",
 				"ClothingSystemRuntimeInterface",
 				"SubobjectDataInterface",

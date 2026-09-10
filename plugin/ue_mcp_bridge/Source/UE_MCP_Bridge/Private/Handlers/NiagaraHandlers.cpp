@@ -9,7 +9,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
 #include "IAssetTools.h"
-#include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "UObject/UObjectGlobals.h"
 #include "UObject/TopLevelAssetPath.h"
 #include "Dom/JsonObject.h"
