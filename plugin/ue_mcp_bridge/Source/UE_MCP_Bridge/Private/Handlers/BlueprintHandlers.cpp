@@ -82,8 +82,15 @@ void FBlueprintHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 	Registry.RegisterHandler(TEXT("read_blueprint"), &ReadBlueprint);
 	Registry.RegisterHandler(TEXT("compile_blueprint"), &CompileBlueprint);
 	Registry.RegisterHandler(TEXT("list_blueprint_variables"), &ListBlueprintVariables);
+	Registry.RegisterHandler(TEXT("list_blueprint_functions"), &ListBlueprintFunctions);
+	Registry.RegisterHandler(TEXT("list_blueprint_graphs"), &ListGraphs);
+	Registry.RegisterHandler(TEXT("resolve_blueprint_graph"), &ResolveGraph);
+	Registry.RegisterHandler(TEXT("search_node_types"), &SearchNodeTypes);
+	Registry.RegisterHandler(TEXT("list_node_types"), &ListNodeTypes);
 	Registry.RegisterHandler(TEXT("read_blueprint_graph"), &ReadBlueprintGraph);
 	Registry.RegisterHandler(TEXT("read_blueprint_graph_summary"), &ReadBlueprintGraphSummary);
+	Registry.RegisterHandler(TEXT("read_node_property"), &ReadNodeProperty);
+	Registry.RegisterHandler(TEXT("export_nodes_t3d"), &ExportNodesT3D);
 	Registry.RegisterHandler(TEXT("get_blueprint_execution_flow"), &GetBlueprintExecutionFlow);
 	Registry.RegisterHandler(TEXT("get_blueprint_dependencies"), &GetBlueprintDependencies);
 	Registry.RegisterHandler(TEXT("validate_blueprint"), &ValidateBlueprint);
