@@ -275,6 +275,8 @@ TSharedPtr<FJsonValue> FBlueprintHandlers::GetConnections(const TSharedPtr<FJson
 	const bool bWantData = Kind != TEXT("exec");
 
 	const bool bIncludeNestedGraphs = OptionalBool(Params, TEXT("includeNestedGraphs"), true);
+	const bool bDumpToFile = OptionalBool(Params, TEXT("dumpToFile"), false);
+	const FString OutputPath = OptionalString(Params, TEXT("outputPath"), TEXT(""));
 
 	MCPPagination::FPageRequest Page;
 	if (auto Err = MCPPagination::ReadPageRequest(
@@ -407,6 +409,35 @@ TSharedPtr<FJsonValue> FBlueprintHandlers::GetConnections(const TSharedPtr<FJson
 	{
 		Result->SetBoolField(TEXT("truncatedAtMaxEdges"), true);
 		Result->SetNumberField(TEXT("maxEdges"), MaxCollectedHits);
+	}
+	if (bDumpToFile)
+	{
+		TArray<TSharedPtr<FJsonValue>> AllEdges;
+		AllEdges.Reserve(Edges.Num());
+		for (const MCPPagination::FPageRow& Edge : Edges)
+		{
+			AllEdges.Add(Edge.Value);
+		}
+		Result->SetArrayField(TEXT("connections"), AllEdges);
+		Result->SetNumberField(TEXT("returned"), AllEdges.Num());
+		Result->SetNumberField(TEXT("total"), AllEdges.Num());
+
+		FString ResolvedDumpPath;
+		FString DumpError;
+		const FString DumpName = (Requested.IsEmpty() ? TEXT("all_graphs") : Requested) + TEXT("_connections");
+		if (!WriteJsonObjectToFile(Result, OutputPath, AssetPath, DumpName, ResolvedDumpPath, DumpError))
+		{
+			return MCPError(DumpError);
+		}
+
+		auto DumpResponse = MCPSuccess();
+		DumpResponse->SetStringField(TEXT("path"), AssetPath);
+		if (!Requested.IsEmpty()) DumpResponse->SetStringField(TEXT("graphName"), Requested);
+		DumpResponse->SetBoolField(TEXT("dumpedToFile"), true);
+		DumpResponse->SetStringField(TEXT("outputPath"), ResolvedDumpPath);
+		DumpResponse->SetNumberField(TEXT("total"), AllEdges.Num());
+		if (bTruncated) DumpResponse->SetBoolField(TEXT("truncatedAtMaxEdges"), true);
+		return MCPResult(DumpResponse);
 	}
 
 	MCPPagination::EmitPage(Page, Edges, TEXT("connections"), Result, !bTruncated);
