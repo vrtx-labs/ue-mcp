@@ -93,8 +93,12 @@ void FBlueprintHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 	Registry.RegisterHandler(TEXT("export_nodes_t3d"), &ExportNodesT3D);
 	Registry.RegisterHandlerWithTimeout(TEXT("search_blueprint_nodes"), &SearchNodes, 180.0f);
 	Registry.RegisterHandlerWithTimeout(TEXT("get_blueprint_connections"), &GetConnections, 180.0f);
+	Registry.RegisterHandlerWithTimeout(TEXT("search_blueprint_call_sites"), &SearchCallSites, 180.0f);
 	Registry.RegisterHandler(TEXT("get_blueprint_execution_flow"), &GetBlueprintExecutionFlow);
 	Registry.RegisterHandler(TEXT("get_blueprint_dependencies"), &GetBlueprintDependencies);
+	Registry.RegisterHandler(TEXT("list_overridable_functions"), &ListOverridableFunctions);
+	Registry.RegisterHandler(TEXT("list_local_variables"), &ListLocalVariables);
+	Registry.RegisterHandler(TEXT("get_blueprint_variable_default"), &GetVariableDefault);
 	Registry.RegisterHandler(TEXT("validate_blueprint"), &ValidateBlueprint);
 	return;
 	#endif
