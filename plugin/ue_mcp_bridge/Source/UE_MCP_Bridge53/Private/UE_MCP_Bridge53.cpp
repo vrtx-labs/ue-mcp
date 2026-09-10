@@ -61,6 +61,24 @@ IMPLEMENT_MODULE(FUEMCPBridge53Module, UE_MCP_Bridge53)
 #include "../../UE_MCP_Bridge/Private/Handlers/BlueprintHandlers_Collision.cpp"
 #include "../../UE_MCP_Bridge/Private/Handlers/DiffHandlers.cpp"
 
+namespace
+{
+	TSharedPtr<FJsonValue> Ue53NotImplemented(const FString& Method)
+	{
+		TSharedPtr<FJsonObject> Body = MakeShared<FJsonObject>();
+		Body->SetBoolField(TEXT("success"), false);
+		Body->SetStringField(TEXT("error"), FString::Printf(
+			TEXT("%s is unavailable on the UE 5.3 compatibility bridge (requires the UE 5.4 user-defined-type metadata API)"), *Method));
+		return MakeShared<FJsonValueObject>(Body);
+	}
+}
+
+TSharedPtr<FJsonValue> FBlueprintHandlers::ReorderEnumValues(const TSharedPtr<FJsonObject>&) { return Ue53NotImplemented(TEXT("reorder_enum_values")); }
+TSharedPtr<FJsonValue> FBlueprintHandlers::SetEnumMetadata(const TSharedPtr<FJsonObject>&) { return Ue53NotImplemented(TEXT("set_enum_metadata")); }
+TSharedPtr<FJsonValue> FBlueprintHandlers::SetStructFieldDefault(const TSharedPtr<FJsonObject>&) { return Ue53NotImplemented(TEXT("set_struct_field_default")); }
+TSharedPtr<FJsonValue> FBlueprintHandlers::ReorderStructFields(const TSharedPtr<FJsonObject>&) { return Ue53NotImplemented(TEXT("reorder_struct_fields")); }
+TSharedPtr<FJsonValue> FBlueprintHandlers::EditStructMetadata(const TSharedPtr<FJsonObject>&) { return Ue53NotImplemented(TEXT("edit_struct_metadata")); }
+
 bool FBlueprintHandlers::ParsePinTypeSpec(const FString& TypeSpec, FEdGraphPinType& OutType, FString& OutError)
 {
 	OutType = MakePinType(TypeSpec);
