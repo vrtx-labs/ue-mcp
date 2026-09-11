@@ -2331,9 +2331,13 @@ TSharedPtr<FJsonValue> FEditorHandlers::SetViewportCamera(const TSharedPtr<FJson
 		if (bHasOrthoZoom)
 		{
 				if (!Params->TryGetNumberField(TEXT("orthoZoom"), RequestedOrthoZoom) || !FMath::IsFinite(RequestedOrthoZoom)
+#if UE_MCP_BLUEPRINT53_CORE
+					|| RequestedOrthoZoom <= 0.0)
+#else
 					|| RequestedOrthoZoom < MIN_ORTHOZOOM || RequestedOrthoZoom > MAX_ORTHOZOOM)
+#endif
 				{
-						return MCPError(TEXT("'orthoZoom' must be finite and within the engine MIN_ORTHOZOOM/MAX_ORTHOZOOM bounds"));
+						return MCPError(TEXT("'orthoZoom' must be finite and within the supported viewport bounds"));
 				}
 		}
 
@@ -3191,9 +3195,14 @@ namespace
 		TSharedPtr<FJsonObject> Row = MakeShared<FJsonObject>();
 		Row->SetStringField(TEXT("name"), Name);
 		Row->SetStringField(TEXT("value"), CVar->GetString());
+		#if UE_MCP_BLUEPRINT53_CORE
+		Row->SetStringField(TEXT("defaultValue"), TEXT("(unavailable on UE 5.3)"));
+		Row->SetBoolField(TEXT("isDefault"), false);
+		#else
 		const FString DefaultValue = CVar->GetDefaultValue();
 		Row->SetStringField(TEXT("defaultValue"), DefaultValue);
 		Row->SetBoolField(TEXT("isDefault"), CVar->GetString() == DefaultValue);
+		#endif
 		const EConsoleVariableFlags SetBy =
 			static_cast<EConsoleVariableFlags>(CVar->GetFlags() & ECVF_SetByMask);
 		Row->SetStringField(TEXT("setBy"), GetConsoleVariableSetByName(SetBy));

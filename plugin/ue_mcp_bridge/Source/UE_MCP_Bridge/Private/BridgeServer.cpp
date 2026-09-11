@@ -28,6 +28,7 @@
 #if UE_MCP_BLUEPRINT53_CORE
 #include "Handlers/BlueprintHandlers_Collision.h"
 #include "Handlers/DiffHandlers.h"
+#include "Handlers/EditorHandlers.h"
 #endif
 #if !UE_MCP_BLUEPRINT53_CORE
 #include "Handlers/EditorHandlers.h"
@@ -171,6 +172,7 @@ FMCPBridgeServer::FMCPBridgeServer(int32 Port, const FString& InPortSource, bool
 	FBlueprintHandlers::RegisterHandlers(HandlerRegistry);
 	FCollisionQueryHandlers::RegisterHandlers(HandlerRegistry);
 	FDiffHandlers::RegisterHandlers(HandlerRegistry);
+	FEditorHandlers::RegisterHandlers(HandlerRegistry);
 #else
 	// Register core handlers
 	FEditorHandlers::RegisterHandlers(HandlerRegistry);

@@ -165,7 +165,7 @@ namespace
 		Pending.Add(Root);
 		while (Pending.Num() > 0)
 		{
-			USceneComponent* Parent = Pending.Pop(EAllowShrinking::No);
+			USceneComponent* Parent = Pending.Pop(false);
 			for (USceneComponent* Child : Parent->GetAttachChildren())
 			{
 				if (!Child || ComponentTargets.Contains(Child)) continue;

@@ -60,6 +60,13 @@ IMPLEMENT_MODULE(FUEMCPBridge53Module, UE_MCP_Bridge53)
 #include "../../UE_MCP_Bridge/Private/Handlers/BlueprintHandlers_Depth.cpp"
 #include "../../UE_MCP_Bridge/Private/Handlers/BlueprintHandlers_Collision.cpp"
 #include "../../UE_MCP_Bridge/Private/Handlers/DiffHandlers.cpp"
+#include "../../UE_MCP_Bridge/Private/Handlers/EditorHandlers.cpp"
+#include "../../UE_MCP_Bridge/Private/Handlers/EditorHandlers_Build.cpp"
+#include "../../UE_MCP_Bridge/Private/Handlers/EditorHandlers_PIE.cpp"
+#include "../../UE_MCP_Bridge/Private/Handlers/EditorHandlers_PIERuntime.cpp"
+#include "../../UE_MCP_Bridge/Private/Handlers/EditorHandlers_Profiling.cpp"
+#include "../../UE_MCP_Bridge/Private/Handlers/EditorHandlers_RuntimeVisibility.cpp"
+#include "../../UE_MCP_Bridge/Private/Handlers/EditorHandlers_ViewportControl.cpp"
 
 namespace
 {

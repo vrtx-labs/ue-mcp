@@ -15,7 +15,14 @@ public class UE_MCP_Bridge53 : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
 			"AnimGraph", "AssetRegistry", "AssetTools", "BlueprintEditorLibrary", "BlueprintGraph", "EditorScriptingUtilities",
-			"EditorSubsystem", "GameplayTags", "Kismet", "KismetCompiler", "Projects", "StructUtils", "SubobjectDataInterface", "UnrealEd", "UE_MCP_BridgeStatus",
+			"DataValidation", "EditorSubsystem", "GameplayTags", "ImageWrapper", "Kismet", "KismetCompiler", "LevelEditor", "LevelSequence",
+			"LevelSequenceEditor", "MainFrame", "MessageLog", "Projects", "PythonScriptPlugin", "RenderCore", "RHI", "Settings",
+			"Slate", "SlateCore", "StructUtils", "SubobjectDataInterface", "UnrealEd", "UE_MCP_BridgeStatus",
 		});
+
+		if (Target.Platform == UnrealTargetPlatform.Win64)
+		{
+			PrivateDependencyModuleNames.Add("LiveCoding");
+		}
 	}
 }
