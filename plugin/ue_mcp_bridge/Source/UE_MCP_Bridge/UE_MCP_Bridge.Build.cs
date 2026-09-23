@@ -203,7 +203,6 @@ public class UE_MCP_Bridge : ModuleRules
 				"StateTreeModule",
 				"StateTreeEditorModule",
 				"StaticMeshDescription",
-				"StructUtils",
 				"ClothingSystemRuntimeCommon",
 				"ClothingSystemRuntimeInterface",
 				"SubobjectDataInterface",
@@ -225,6 +224,13 @@ public class UE_MCP_Bridge : ModuleRules
 				"WorkspaceMenuStructure",
 			}
 		);
+
+		// FInstancedStruct moved into CoreUObject in UE 5.5. Earlier engines
+		// still provide it through the StructUtils plugin.
+		if (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion < 5)
+		{
+			PrivateDependencyModuleNames.Add("StructUtils");
+		}
 
 		// LiveCoding is Windows-only (Developer/Windows/LiveCoding)
 		if (Target.Platform == UnrealTargetPlatform.Win64)

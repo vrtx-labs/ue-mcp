@@ -302,7 +302,11 @@ void FEditorHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 	Registry.RegisterHandler(TEXT("focus_viewport_on_actor"), &FocusViewportOnActor);
 	Registry.RegisterHandler(TEXT("hot_reload"), &HotReload);
 	Registry.RegisterHandler(TEXT("create_new_level"), &CreateNewLevel);
+	// UE 5.3 intentionally omits the modern level registrar. Keep its legacy
+	// save method out of the compact compatibility bridge too.
+#if !UE_MCP_BLUEPRINT53_CORE
 	Registry.RegisterHandler(TEXT("save_current_level"), &SaveCurrentLevel);
+#endif
 	Registry.RegisterHandler(TEXT("open_asset"), &OpenAsset);
 	Registry.RegisterHandler(TEXT("get_runtime_value"), &PieGetRuntimeValue);
 	// New handlers
@@ -318,7 +322,11 @@ void FEditorHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 	// #693: headless automation test runner.
 	Registry.RegisterHandlerWithTimeout(TEXT("run_automation_tests"), &RunAutomationTests, 300.0f);
 	// #14: Build project
+	// The TypeScript action builds after stopping the editor, so the old
+	// editor-side route is not reachable in the UE 5.3 compatibility bridge.
+#if !UE_MCP_BLUEPRINT53_CORE
 	Registry.RegisterHandler(TEXT("build_project"), &BuildProject);
+#endif
 	// #49: Generate project files
 	Registry.RegisterHandler(TEXT("generate_project_files"), &GenerateProjectFiles);
 	// #126: fast-forward PIE game time

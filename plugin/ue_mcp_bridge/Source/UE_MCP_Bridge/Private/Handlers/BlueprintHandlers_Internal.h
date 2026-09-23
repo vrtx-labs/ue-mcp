@@ -157,6 +157,15 @@ inline FString MakeDefaultGraphDumpPath(const FString& AssetPath, const FString&
 	return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("UE_MCP"), TEXT("GraphDumps"), BaseName + TEXT(".json"));
 }
 
+/** A dump path a client can resolve from the project directory. */
+inline FString MakeProjectRelativeDumpPath(const FString& AbsolutePath)
+{
+	FString RelativePath = AbsolutePath;
+	return FPaths::MakePathRelativeTo(RelativePath, *FPaths::ProjectDir())
+		? RelativePath
+		: AbsolutePath;
+}
+
 inline bool WriteJsonObjectToFile(
 	const TSharedPtr<FJsonObject>& JsonObject,
 	const FString& RequestedPath,

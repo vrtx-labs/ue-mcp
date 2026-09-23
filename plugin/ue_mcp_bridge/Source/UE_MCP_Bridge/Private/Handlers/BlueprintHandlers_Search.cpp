@@ -273,6 +273,7 @@ TSharedPtr<FJsonValue> FBlueprintHandlers::GetConnections(const TSharedPtr<FJson
 	}
 	const bool bWantExec = Kind != TEXT("data");
 	const bool bWantData = Kind != TEXT("exec");
+	const FString NodeId = OptionalString(Params, TEXT("nodeId"), TEXT(""));
 
 	const bool bIncludeNestedGraphs = OptionalBool(Params, TEXT("includeNestedGraphs"), true);
 	const bool bDumpToFile = OptionalBool(Params, TEXT("dumpToFile"), false);
@@ -281,8 +282,8 @@ TSharedPtr<FJsonValue> FBlueprintHandlers::GetConnections(const TSharedPtr<FJson
 	MCPPagination::FPageRequest Page;
 	if (auto Err = MCPPagination::ReadPageRequest(
 			Params,
-			FString::Printf(TEXT("get_blueprint_connections|asset=%s|graph=%s|kind=%s|nested=%d"),
-				*Blueprint->GetPathName(), *Requested, *Kind, bIncludeNestedGraphs ? 1 : 0),
+			FString::Printf(TEXT("get_blueprint_connections|asset=%s|graph=%s|kind=%s|node=%s|nested=%d"),
+				*Blueprint->GetPathName(), *Requested, *Kind, *NodeId, bIncludeNestedGraphs ? 1 : 0),
 			DefaultCallSiteLimit, MaxCallSiteLimit, Page))
 	{
 		return Err;
@@ -336,6 +337,12 @@ TSharedPtr<FJsonValue> FBlueprintHandlers::GetConnections(const TSharedPtr<FJson
 					if (!Linked) continue;
 					const UEdGraphNode* const Target = Linked->GetOwningNodeUnchecked();
 					if (!Target) continue;
+					if (!NodeId.IsEmpty()
+						&& !Node->NodeGuid.ToString().Equals(NodeId, ESearchCase::IgnoreCase)
+						&& !Target->NodeGuid.ToString().Equals(NodeId, ESearchCase::IgnoreCase))
+					{
+						continue;
+					}
 
 					TSharedPtr<FJsonObject> Edge = MakeShared<FJsonObject>();
 					Edge->SetStringField(TEXT("kind"), bExec ? TEXT("exec") : TEXT("data"));
@@ -391,6 +398,7 @@ TSharedPtr<FJsonValue> FBlueprintHandlers::GetConnections(const TSharedPtr<FJson
 	if (!Requested.IsEmpty()) Result->SetStringField(TEXT("graph"), Requested);
 	Result->SetStringField(TEXT("kind"), Kind);
 	Result->SetBoolField(TEXT("includeNestedGraphs"), bIncludeNestedGraphs);
+	if (!NodeId.IsEmpty()) Result->SetStringField(TEXT("nodeId"), NodeId);
 	if (NameMatches > 1)
 	{
 		// Reading is not destructive, so this reports rather than refuses - but
@@ -435,6 +443,7 @@ TSharedPtr<FJsonValue> FBlueprintHandlers::GetConnections(const TSharedPtr<FJson
 		if (!Requested.IsEmpty()) DumpResponse->SetStringField(TEXT("graphName"), Requested);
 		DumpResponse->SetBoolField(TEXT("dumpedToFile"), true);
 		DumpResponse->SetStringField(TEXT("outputPath"), ResolvedDumpPath);
+		DumpResponse->SetStringField(TEXT("projectRelativeOutputPath"), MakeProjectRelativeDumpPath(ResolvedDumpPath));
 		DumpResponse->SetNumberField(TEXT("total"), AllEdges.Num());
 		if (bTruncated) DumpResponse->SetBoolField(TEXT("truncatedAtMaxEdges"), true);
 		return MCPResult(DumpResponse);

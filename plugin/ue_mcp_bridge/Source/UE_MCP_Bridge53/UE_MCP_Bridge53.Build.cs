@@ -17,8 +17,13 @@ public class UE_MCP_Bridge53 : ModuleRules
 			"AnimGraph", "AssetRegistry", "AssetTools", "BlueprintEditorLibrary", "BlueprintGraph", "EditorScriptingUtilities",
 			"DataValidation", "EditorSubsystem", "GameplayTags", "ImageWrapper", "Kismet", "KismetCompiler", "LevelEditor", "LevelSequence",
 			"LevelSequenceEditor", "MainFrame", "MessageLog", "Projects", "PythonScriptPlugin", "RenderCore", "RHI", "Settings",
-			"Slate", "SlateCore", "StructUtils", "SubobjectDataInterface", "UnrealEd", "UE_MCP_BridgeStatus",
+			"Slate", "SlateCore", "SubobjectDataInterface", "UnrealEd", "UE_MCP_BridgeStatus",
 		});
+
+		if (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion < 5)
+		{
+			PrivateDependencyModuleNames.Add("StructUtils");
+		}
 
 		if (Target.Platform == UnrealTargetPlatform.Win64)
 		{

@@ -10,7 +10,12 @@
 #include "UObject/UnrealType.h"
 #include "UObject/PropertyPortFlags.h"
 #include "UObject/SoftObjectPtr.h"
+#include "Misc/EngineVersionComparison.h"
+#if UE_VERSION_OLDER_THAN(5, 5, 0)
 #include "InstancedStruct.h"
+#else
+#include "StructUtils/InstancedStruct.h"
+#endif
 #include "GameplayTagContainer.h"
 #include "GameplayTagsManager.h"
 #include "Engine/Blueprint.h"

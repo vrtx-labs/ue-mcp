@@ -128,6 +128,29 @@ describe("reading data edges (#996 gap 2)", () => {
     const wiredGetter = getters.filter((g) => sourceIds.has(g.nodeId));
     expect(wiredGetter, "the edge does not name which getter it came from").toHaveLength(1);
   });
+
+  it("filters to the incoming and outgoing edges of one node GUID", async () => {
+    expect(fixtureError, fixtureError).toBe("");
+    const nodes = await callBridge(bridge, "search_blueprint_nodes", {
+      assetPath: BP,
+      nodeClasses: ["K2Node_VariableGet"],
+    });
+    expect(nodes.ok, nodes.error).toBe(true);
+    const getters = (resultArray(nodes.result, "nodes") ?? []) as Array<{ nodeId?: string }>;
+    const all = await connections({ kind: "data" });
+    const edge = all.find((candidate) => getters.some((getter) => candidate.fromNodeId === getter.nodeId));
+    const wiredGetter = getters.find((getter) => edge?.fromNodeId === getter.nodeId);
+    expect(wiredGetter?.nodeId, "fixture did not identify the wired getter").toBeTruthy();
+    expect(edge?.toNodeId, "fixture did not identify the edge target").toBeTruthy();
+
+    const sourceFiltered = await connections({ kind: "data", nodeId: wiredGetter!.nodeId });
+    expect(sourceFiltered).toHaveLength(1);
+    expect(sourceFiltered[0].fromNodeId).toBe(wiredGetter!.nodeId);
+
+    const targetFiltered = await connections({ kind: "data", nodeId: edge!.toNodeId });
+    expect(targetFiltered).toHaveLength(1);
+    expect(targetFiltered[0].toNodeId).toBe(edge!.toNodeId);
+  });
 });
 
 describe("filtering and addressing (#996 gap 2)", () => {
@@ -144,6 +167,18 @@ describe("filtering and addressing (#996 gap 2)", () => {
     const all = await connections();
     const ids = all.map((e) => `${e.fromNodeId}.${e.fromPin}->${e.toNodeId}.${e.toPin}`);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("reports a project-relative path for complete connection dumps", async () => {
+    expect(fixtureError, fixtureError).toBe("");
+    const dumped = await callBridge(bridge, "get_blueprint_connections", {
+      assetPath: BP,
+      dumpToFile: true,
+    });
+    expect(dumped.ok, dumped.error).toBe(true);
+    const result = dumped.result as Record<string, unknown>;
+    expect(result.dumpedToFile).toBe(true);
+    expect(String(result.projectRelativeOutputPath ?? "")).toMatch(/^Saved[\\/]UE_MCP[\\/]GraphDumps[\\/].+\.json$/);
   });
 
   it("refuses a graph name the Blueprint does not have", async () => {
