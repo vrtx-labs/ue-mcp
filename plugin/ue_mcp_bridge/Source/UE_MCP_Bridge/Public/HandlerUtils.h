@@ -14,6 +14,8 @@
 #include "EngineUtils.h"
 #include "GameFramework/Actor.h"
 #include "Components/SceneComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
 #include "EditorAssetLibrary.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetRegistry/IAssetRegistry.h"
@@ -55,6 +57,56 @@
 // (added in 5.8; the status module carries its own copy of this macro because
 // it must not depend on this one).
 #define UE_MCP_HAS_5_8_API ((ENGINE_MAJOR_VERSION > 5) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 8))
+
+// ── Engine API shims ─────────────────────────────────────────────────────────
+//
+// Where an engine API was renamed or wrapped between 5.4 and 5.8, the shim goes
+// here rather than in a handler, so two handlers cannot end up with two
+// spellings of the same rule. Headers that moved live in MCPEngineCompat.h.
+
+/** UStaticMesh Nanite settings. 5.5 added the accessor pair; 5.4 has only the
+ *  member, which 5.7 in turn deprecated direct access to. */
+inline FMeshNaniteSettings MCPGetNaniteSettings(const UStaticMesh* Mesh)
+{
+	if (!Mesh) return FMeshNaniteSettings();
+#if UE_MCP_HAS_5_5_API
+	return Mesh->GetNaniteSettings();
+#else
+	return Mesh->NaniteSettings;
+#endif
+}
+
+/** Counterpart to MCPGetNaniteSettings. The caller still owns Modify(). */
+inline void MCPSetNaniteSettings(UStaticMesh* Mesh, const FMeshNaniteSettings& InSettings)
+{
+	if (!Mesh) return;
+#if UE_MCP_HAS_5_5_API
+	Mesh->SetNaniteSettings(InSettings);
+#else
+	Mesh->NaniteSettings = InSettings;
+#endif
+}
+
+/** Per-component Nanite opt-outs. 5.5 wrapped the bitfields in accessors. */
+inline bool MCPIsDisallowNanite(const UStaticMeshComponent* Component)
+{
+	if (!Component) return false;
+#if UE_MCP_HAS_5_5_API
+	return Component->IsDisallowNanite();
+#else
+	return Component->bDisallowNanite != 0;
+#endif
+}
+
+inline bool MCPIsForceDisableNanite(const UStaticMeshComponent* Component)
+{
+	if (!Component) return false;
+#if UE_MCP_HAS_5_5_API
+	return Component->IsForceDisableNanite();
+#else
+	return Component->bForceDisableNanite != 0;
+#endif
+}
 
 // ── Quick result builders ────────────────────────────────────────────────────
 
@@ -257,60 +309,17 @@ inline FMCPAssetPathForms MCPAssetPathForms(const FString& AssetPath)
 	return Forms;
 }
 
-/** Load the asset at `AssetPath`, the way asset(read) does.
+/** Is this candidate an asset the editor still consults?
  *
- *  UEditorAssetLibrary::LoadAsset is the usual entry point, but it validates
- *  the path through EditorScriptingHelpers before it loads anything and
- *  answers null for path forms it does not accept, and for any call made
- *  while the editor is in play-in-editor. asset(read) has always had a
- *  LoadObject fallback for exactly that reason, and the type-specific readers
- *  did not: read_datatable, get_datatable_row and export all reported
- *  "Asset not found" or "Asset is not a DataTable" for assets that
- *  asset(read) opened and correctly named as DataTables (#930).
- *
- *  This lives here rather than as a copy per handler file: the asset handlers
- *  share one unity blob, and a second copy would either collide at compile
- *  time or drift into resolving differently from its neighbours. */
-inline UObject* MCPLoadAssetObject(const FString& AssetPath)
+ *  RF_NewerVersionExists marks an object a package reload replaced. It stays
+ *  reachable, and resolving to one is silent: reads report stale values and
+ *  writes land where nothing looks (#972, #1074). */
+inline bool MCPIsLiveAssetObject(const UObject* Candidate)
 {
-	if (AssetPath.IsEmpty()) return nullptr;
-
-	const FMCPAssetPathForms Forms = MCPAssetPathForms(AssetPath);
-	if (Forms.ObjectPath.IsEmpty()) return nullptr;
-
-	// An object already in memory is the answer, and running a path validator
-	// over it can only turn a good answer into a null and an error log. The
-	// object path is what this step needs: a path with no "." names a package,
-	// and returning the UPackage in place of the asset would be a worse answer
-	// than not looking, so the derived object path stands in for it.
-	if (UObject* Loaded = FindObject<UObject>(nullptr, *Forms.ObjectPath))
-	{
-		if (!Loaded->IsA<UPackage>()) return Loaded;
-	}
-
-	if (UObject* ViaEditorLibrary = UEditorAssetLibrary::LoadAsset(AssetPath))
-	{
-		return ViaEditorLibrary;
-	}
-
-	// #957: the caller's own form is tried first so nothing that used to work
-	// stops working, and the derived object path second. A bare package path
-	// for an asset that is not loaded yet is the case that used to answer
-	// "Asset not found" for an asset asset(search) had just reported by that
-	// exact string, because the load stopped at a form the loader would not
-	// resolve on its own.
-	if (UObject* ViaInput = LoadObject<UObject>(nullptr, *AssetPath))
-	{
-		if (!ViaInput->IsA<UPackage>()) return ViaInput;
-	}
-	if (!Forms.bInputCarriedObjectName)
-	{
-		if (UObject* ViaObjectPath = LoadObject<UObject>(nullptr, *Forms.ObjectPath))
-		{
-			if (!ViaObjectPath->IsA<UPackage>()) return ViaObjectPath;
-		}
-	}
-	return nullptr;
+	if (!IsValid(Candidate)) return false;
+	if (Candidate->HasAnyFlags(RF_NewerVersionExists)) return false;
+	if (Candidate->IsA<UPackage>()) return false;
+	return true;
 }
 
 /** Look an asset path up in the Asset Registry without loading anything.
@@ -338,6 +347,118 @@ inline FAssetData MCPFindAssetDataForPath(const FMCPAssetPathForms& Forms)
 		if (Candidate.IsValid()) return Candidate;
 	}
 	return FAssetData();
+}
+
+/** Is there really an asset at this path, without loading anything?
+ *
+ *  Both sources, because an unsaved asset has no file and the registry is its
+ *  only witness. Shared so the resolvers cannot disagree about it. */
+inline bool MCPAssetExistsWithoutLoading(const FMCPAssetPathForms& Forms)
+{
+	if (!Forms.PackagePath.IsEmpty()
+		&& FPackageName::IsValidLongPackageName(Forms.PackagePath)
+		&& FPackageName::DoesPackageExist(Forms.PackagePath))
+	{
+		return true;
+	}
+	return MCPFindAssetDataForPath(Forms).IsValid();
+}
+
+/** Load the asset at `AssetPath`, the way asset(read) does.
+ *
+ *  UEditorAssetLibrary::LoadAsset is the usual entry point, but it validates
+ *  the path through EditorScriptingHelpers before it loads anything and
+ *  answers null for path forms it does not accept, and for any call made
+ *  while the editor is in play-in-editor. asset(read) has always had a
+ *  LoadObject fallback for exactly that reason, and the type-specific readers
+ *  did not: read_datatable, get_datatable_row and export all reported
+ *  "Asset not found" or "Asset is not a DataTable" for assets that
+ *  asset(read) opened and correctly named as DataTables (#930).
+ *
+ *  Every candidate is revalidated by MCPIsLiveAssetObject above (#1074).
+ *
+ *  This lives here rather than as a copy per handler file: the asset handlers
+ *  share one unity blob, and a second copy would either collide at compile
+ *  time or drift into resolving differently from its neighbours. */
+inline UObject* MCPLoadAssetObject(const FString& AssetPath)
+{
+	if (AssetPath.IsEmpty()) return nullptr;
+
+	const FMCPAssetPathForms Forms = MCPAssetPathForms(AssetPath);
+	if (Forms.ObjectPath.IsEmpty()) return nullptr;
+
+	// An object already in memory is the answer, and running a path validator
+	// over it can only turn a good answer into a null and an error log. The
+	// object path is what this step needs: a path with no "." names a package,
+	// and returning the UPackage in place of the asset would be a worse answer
+	// than not looking, so the derived object path stands in for it.
+	if (UObject* Loaded = FindObject<UObject>(nullptr, *Forms.ObjectPath))
+	{
+		if (MCPIsLiveAssetObject(Loaded)) return Loaded;
+	}
+
+	if (UObject* ViaEditorLibrary = UEditorAssetLibrary::LoadAsset(AssetPath))
+	{
+		if (MCPIsLiveAssetObject(ViaEditorLibrary)) return ViaEditorLibrary;
+	}
+
+	// #957: the caller's own form is tried first so nothing that used to work
+	// stops working, and the derived object path second. A bare package path
+	// for an asset that is not loaded yet is the case that used to answer
+	// "Asset not found" for an asset asset(search) had just reported by that
+	// exact string, because the load stopped at a form the loader would not
+	// resolve on its own.
+	// Gated for the same reason as the package load below: LoadObject on a path
+	// with nothing behind it can force a blocking package search.
+	if (!MCPAssetExistsWithoutLoading(Forms)) return nullptr;
+
+	if (UObject* ViaInput = LoadObject<UObject>(nullptr, *AssetPath))
+	{
+		if (MCPIsLiveAssetObject(ViaInput)) return ViaInput;
+	}
+	if (!Forms.bInputCarriedObjectName)
+	{
+		if (UObject* ViaObjectPath = LoadObject<UObject>(nullptr, *Forms.ObjectPath))
+		{
+			if (MCPIsLiveAssetObject(ViaObjectPath)) return ViaObjectPath;
+		}
+	}
+
+	// Every step above rejected its candidate. A full load re-reads the package,
+	// gated on the asset existing so LoadPackage cannot force a blind search.
+	const FString PackageName = FPackageName::ObjectPathToPackageName(Forms.ObjectPath);
+	if (!PackageName.IsEmpty())
+	{
+		if (UPackage* Package = LoadPackage(nullptr, *PackageName, LOAD_None))
+		{
+			Package->FullyLoad();
+			const FString ObjectName = FPackageName::ObjectPathToObjectName(Forms.ObjectPath);
+			if (UObject* InPackage = FindObject<UObject>(Package, *ObjectName))
+			{
+				if (MCPIsLiveAssetObject(InPackage)) return InPackage;
+			}
+		}
+	}
+	return nullptr;
+}
+
+/** Is a play-in-editor or simulate session running right now?
+ *
+ *  The editor's asset loader refuses every call in play mode and logs the
+ *  reason where a bridge caller cannot see it (#1065). */
+inline bool MCPIsPlayInEditorActive()
+{
+	return GEditor && (GEditor->PlayWorld != nullptr || GEditor->bIsSimulatingInEditor);
+}
+
+/** Appended to a load failure while PIE is running, empty otherwise. One
+ *  wording, shared by every resolver. */
+inline FString MCPPlayInEditorLoadNote()
+{
+	if (!MCPIsPlayInEditorActive()) return FString();
+	return TEXT(" A play-in-editor session is running, which changes how assets load: ")
+		TEXT("the editor's own asset loader refuses every call while in play mode. ")
+		TEXT("Stop play with editor(action=\"stop_pie\") and retry before treating this as an asset problem.");
 }
 
 /** The answer for a path MCPLoadAssetObject could not resolve.
@@ -409,9 +530,15 @@ inline TSharedPtr<FJsonValue> MCPAssetNotFoundError(const FString& AssetPath, co
 			*Prefix, *Forms.PackagePath, *AssetPath, *Forms.ObjectPath);
 	}
 
+	// Appended, not substituted: what the registry and filesystem report stays
+	// true and stays first.
+	const FString PlayNote = MCPPlayInEditorLoadNote();
+	if (!PlayNote.IsEmpty()) Message += PlayNote;
+
 	TSharedPtr<FJsonObject> Obj = MakeShared<FJsonObject>();
 	Obj->SetBoolField(TEXT("success"), false);
 	Obj->SetStringField(TEXT("error"), Message);
+	Obj->SetBoolField(TEXT("playInEditorActive"), !PlayNote.IsEmpty());
 	Obj->SetStringField(TEXT("assetPath"), AssetPath);
 	Obj->SetStringField(TEXT("packagePath"), Forms.PackagePath);
 	Obj->SetStringField(TEXT("objectPath"), Forms.ObjectPath);
@@ -1404,6 +1531,20 @@ namespace MCPClassResolve
 				if (!ObjectPart.EndsWith(TEXT("_C")))
 				{
 					Add(Trimmed + TEXT("_C"));
+				}
+
+				// A /Script path names a module, and modules move between them:
+				// UPhysicalMaterial is /Script/PhysicsCore.PhysicalMaterial, not
+				// /Script/Engine.PhysicalMaterial, which is the spelling older
+				// documentation uses and the one this resolver's own "not found"
+				// text recommends. The leaf name is added LAST, so an exact path
+				// still wins and this is only reached when no spelling of the
+				// path matched anything at all.
+				if (PackagePart.StartsWith(TEXT("/Script/")))
+				{
+					Add(ObjectPart);
+					const FString StrippedLeaf = StripPrefix(ObjectPart);
+					if (StrippedLeaf != ObjectPart) Add(StrippedLeaf);
 				}
 			}
 			else

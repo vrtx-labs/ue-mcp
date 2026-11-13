@@ -303,8 +303,11 @@ TSharedPtr<FJsonValue> FEditorHandlers::ValidateAssets(const TSharedPtr<FJsonObj
 	Settings.ValidationUsecase = IsRunningCommandlet() ? EDataValidationUsecase::Commandlet : EDataValidationUsecase::Manual;
 	Settings.bCollectPerAssetDetails = true;
 	Settings.bShowIfNoFailures = false;
-#if !UE_MCP_BLUEPRINT53_CORE
+#if UE_MCP_HAS_5_5_API
 	Settings.bSilent = true;
+#else
+	// 5.4 has no bSilent; bShowIfNoFailures above is the only noise control it
+	// offers.
 #endif
 	FValidateAssetsResults ValidationResults;
 	ValidatorSubsystem->ValidateAssetsWithSettings(AssetDataList, Settings, ValidationResults);
@@ -329,8 +332,13 @@ TSharedPtr<FJsonValue> FEditorHandlers::ValidateAssets(const TSharedPtr<FJsonObj
 	Result->SetNumberField(TEXT("skipped"), ValidationResults.NumSkipped);
 	Result->SetNumberField(TEXT("warnings"), ValidationResults.NumWarnings);
 	Result->SetNumberField(TEXT("unableToValidate"), ValidationResults.NumUnableToValidate);
-#if !UE_MCP_BLUEPRINT53_CORE
+#if UE_MCP_HAS_5_5_API
 	Result->SetNumberField(TEXT("externalObjects"), ValidationResults.NumExternalObjects);
+#else
+	// 5.4 does not count external objects separately, and reporting a zero it
+	// never measured would read as "none found" rather than "not measured".
+#endif
+#if UE_MCP_HAS_5_4_API
 	Result->SetBoolField(TEXT("assetLimitReached"), ValidationResults.bAssetLimitReached);
 #endif
 	const FString OverallResult = ValidationResults.NumInvalid > 0

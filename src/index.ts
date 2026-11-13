@@ -30,6 +30,7 @@ import {
   type ElicitFn,
   type ProgressFn,
   type ProgressUpdate,
+  stripAction,
 } from "./types.js";
 import { McpError, ErrorCode } from "./errors.js";
 import * as nodePath from "node:path";
@@ -363,6 +364,10 @@ async function main() {
   // Elicitation is only meaningful once the client has advertised support
   // during initialize. We lazily probe at call time so the function is bound
   // to whatever the live capabilities are, not a stale snapshot.
+  // A person answers a form when they get to it, not within the SDK's 60
+  // second request default. An answer given after that was discarded with
+  // nothing pressed, and the same question went up again (#1076).
+  const ELICIT_TIMEOUT_MS = 24 * 60 * 60 * 1000;
   const buildElicit = (mcp: McpServer): ElicitFn | undefined => {
     const elicit: ElicitFn = async (params) => {
       const caps = mcp.server.getClientCapabilities();
@@ -374,7 +379,7 @@ async function main() {
           "Connected MCP client did not advertise the `elicitation` capability - cannot obtain a deterministic user approval. Upgrade your client (Claude Code >= 2.1.76) or run the action from a client that supports MCP elicitation.",
         );
       }
-      const result = await mcp.server.elicitInput(params);
+      const result = await mcp.server.elicitInput(params, { timeout: ELICIT_TIMEOUT_MS });
       return result as Awaited<ReturnType<ElicitFn>>;
     };
     // The gate is built before any client has connected, so this function
@@ -498,16 +503,50 @@ async function main() {
       getPlugins: () => getPlugins(load.surface.session),
       getToolGraph: (forSession) => getToolGraph(forSession ?? load.surface.session),
     };
+    const readProjectConfig = () => loadFlowConfig(load.surface.tools, load.configDir, {
+      tasks: load.pluginLoad.taskDefs,
+      flows: load.pluginLoad.flowDefs,
+    }).config;
+
+    // Guard options track ue-mcp.yml (#1061). Gated on mtime and size, because
+    // a before hook runs on every call it covers and parsing YAML there would
+    // put a config read on the hot path. An unchanged file costs one stat.
+    const configPath = path.join(load.configDir ?? process.cwd(), "ue-mcp.yml");
+    let cachedStamp: string | null = null;
+    let cachedGuards: GuardDeclarations = {};
+    const liveGuardDeclarations = (): GuardDeclarations => {
+      let stamp: string;
+      try {
+        const st = fs.statSync(configPath);
+        stamp = `${st.mtimeMs}:${st.size}`;
+      } catch {
+        // No project file: plugin-declared guards keep their manifest options.
+        return {};
+      }
+      if (stamp === cachedStamp) return cachedGuards;
+      try {
+        cachedGuards = (readProjectConfig().guards ?? {}) as GuardDeclarations;
+        cachedStamp = stamp;
+      } catch (e) {
+        // A half-written file must not disarm a guard.
+        console.error(
+          `[ue-mcp] ${load.surface.session.name}: ue-mcp.yml changed but could not be re-read, `
+          + `guard options are unchanged: ${e instanceof Error ? e.message : String(e)}`,
+        );
+        cachedStamp = stamp;
+      }
+      return cachedGuards;
+    };
+
     const deps = {
       registry: load.registry!,
       ctx: guardCtx,
       rawBridge: load.surface.session.bridge,
+      liveOptions: (guardName: string, phase: "before" | "after") =>
+        liveGuardDeclarations()[guardName]?.[phase]?.options,
     };
 
-    const projectConfig = loadFlowConfig(load.surface.tools, load.configDir, {
-      tasks: load.pluginLoad.taskDefs,
-      flows: load.pluginLoad.flowDefs,
-    }).config;
+    const projectConfig = readProjectConfig();
 
     const sources: Array<{ label: string; guards: GuardDeclarations }> = [
       ...load.pluginLoad.guardsByPlugin.map((g) => ({ label: g.plugin, guards: g.guards })),
@@ -746,7 +785,7 @@ async function main() {
         };
       }
 
-      const { action: _, ...taskParams } = params;
+      const taskParams = stripAction(params);
       const flowCtx: FlowContext = {
         bridge: session.guarded,
         project: session.project,
@@ -1035,6 +1074,7 @@ async function main() {
   console.error(`[ue-mcp] ue-mcp.yml loaded - ${Object.keys(initialLoad.config.flows).length} flow(s), ${Object.keys(initialLoad.config.tasks).length} custom task(s)`);
 
   // Config is reloaded on every flow call - edit ue-mcp.yml without restarting.
+  // Guard options are re-read the same way, gated on the file's mtime (#1061).
   // Resolved from the addressed editor: a flow declared in one project's
   // ue-mcp.yml belongs to that project, and its steps have to dispatch through
   // that project's registry or a step naming an action only that project has

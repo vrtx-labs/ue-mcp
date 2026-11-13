@@ -62,6 +62,7 @@ IMPLEMENT_MODULE(FUEMCPBridge53Module, UE_MCP_Bridge53)
 #include "../../UE_MCP_Bridge/Private/Handlers/DiffHandlers.cpp"
 #include "../../UE_MCP_Bridge/Private/Handlers/EditorHandlers.cpp"
 #include "../../UE_MCP_Bridge/Private/Handlers/EditorHandlers_Build.cpp"
+#include "../../UE_MCP_Bridge/Private/Handlers/EditorHandlers_OpenEditors.cpp"
 #include "../../UE_MCP_Bridge/Private/Handlers/EditorHandlers_PIE.cpp"
 #include "../../UE_MCP_Bridge/Private/Handlers/EditorHandlers_PIERuntime.cpp"
 #include "../../UE_MCP_Bridge/Private/Handlers/EditorHandlers_Profiling.cpp"

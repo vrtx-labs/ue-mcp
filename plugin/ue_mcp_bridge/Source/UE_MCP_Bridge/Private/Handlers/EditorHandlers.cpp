@@ -24,6 +24,7 @@
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "IPythonScriptPlugin.h"
+#include "Misc/Base64.h"
 #include "LevelSequence.h"
 #include "LevelSequenceEditorBlueprintLibrary.h"
 #include "Framework/Docking/TabManager.h"
@@ -308,6 +309,8 @@ void FEditorHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 	Registry.RegisterHandler(TEXT("save_current_level"), &SaveCurrentLevel);
 #endif
 	Registry.RegisterHandler(TEXT("open_asset"), &OpenAsset);
+	// #1112: the inverse of open_asset - what is already open, and what has focus.
+	Registry.RegisterHandler(TEXT("get_open_asset_editors"), &GetOpenAssetEditors);
 	Registry.RegisterHandler(TEXT("get_runtime_value"), &PieGetRuntimeValue);
 	// New handlers
 	Registry.RegisterHandler(TEXT("run_stat_command"), &RunStatCommand);
@@ -403,6 +406,53 @@ namespace
 		S.ReplaceInline(TEXT("\n"), TEXT("\\n"));
 		S.ReplaceInline(TEXT("\t"), TEXT("\\t"));
 		return FString(TEXT("\"")) + S + TEXT("\"");
+	}
+
+	/**
+	 * The value of a Python variable, as text a caller can use directly.
+	 *
+	 * UE only evaluates a statement to `repr(value)`, so a str came back
+	 * wearing quotes: a script that set `mcp_result = 'done'` produced
+	 * `result: "'done'"`, and nothing in the response said whether those
+	 * quotes were data or packaging. This evaluates the variable base64 encoded
+	 * instead. Base64 is pure ASCII with no escapes, so its own repr is exactly
+	 * one quote character on each side and the text inside survives byte for
+	 * byte, unicode and embedded quotes included.
+	 *
+	 * A str yields its own characters; anything else yields its repr, which is
+	 * what makes a dict or a list readable. Returns false when the variable
+	 * does not exist or the round trip fails, and the caller then falls back to
+	 * the plain evaluation so this can only ever add fidelity.
+	 */
+	static bool EvaluatePythonResultVariable(
+		IPythonScriptPlugin* PythonPlugin,
+		const FString& VariableName,
+		FString& OutText)
+	{
+		if (!PythonPlugin || VariableName.IsEmpty()) return false;
+
+		FPythonCommandEx EncodeCommand;
+		EncodeCommand.Command = FString::Printf(
+			TEXT("__import__('base64').b64encode((lambda __mcp_v: __mcp_v if isinstance(__mcp_v, str) else repr(__mcp_v))(%s).encode('utf-8')).decode('ascii')"),
+			*VariableName);
+		EncodeCommand.ExecutionMode = EPythonCommandExecutionMode::EvaluateStatement;
+		EncodeCommand.FileExecutionScope = EPythonFileExecutionScope::Public;
+		if (!PythonPlugin->ExecPythonCommandEx(EncodeCommand)) return false;
+
+		FString Encoded = EncodeCommand.CommandResult.TrimStartAndEnd();
+		if (Encoded.Len() < 2) return false;
+		const TCHAR Quote = Encoded[0];
+		if ((Quote != TEXT('\'') && Quote != TEXT('"')) || Encoded[Encoded.Len() - 1] != Quote)
+		{
+			return false;
+		}
+		Encoded = Encoded.Mid(1, Encoded.Len() - 2);
+
+		TArray<uint8> Bytes;
+		if (!FBase64::Decode(Encoded, Bytes)) return false;
+		Bytes.Add(0);
+		OutText = FString(UTF8_TO_TCHAR(reinterpret_cast<const char*>(Bytes.GetData())));
+		return true;
 	}
 
 	static void EmitPythonLog(const TSharedPtr<FJsonObject>& Params,
@@ -524,14 +574,26 @@ TSharedPtr<FJsonValue> FEditorHandlers::ExecutePython(const TSharedPtr<FJsonObje
 	bool bResultVariableResolved = false;
 	if (bSuccess && !ResultVariable.IsEmpty())
 	{
-		FPythonCommandEx EvalCommand;
-		EvalCommand.Command = ResultVariable;
-		EvalCommand.ExecutionMode = EPythonCommandExecutionMode::EvaluateStatement;
-		EvalCommand.FileExecutionScope = EPythonFileExecutionScope::Public;
-		if (PythonPlugin->ExecPythonCommandEx(EvalCommand))
+		FString VariableText;
+		if (EvaluatePythonResultVariable(PythonPlugin, ResultVariable, VariableText))
 		{
-			ResultText = EvalCommand.CommandResult;
+			ResultText = VariableText;
 			bResultVariableResolved = true;
+		}
+		else
+		{
+			// The encoded round trip is the accurate path; a plain evaluation is
+			// kept behind it so a variable it cannot encode still reports
+			// something rather than nothing.
+			FPythonCommandEx EvalCommand;
+			EvalCommand.Command = ResultVariable;
+			EvalCommand.ExecutionMode = EPythonCommandExecutionMode::EvaluateStatement;
+			EvalCommand.FileExecutionScope = EPythonFileExecutionScope::Public;
+			if (PythonPlugin->ExecPythonCommandEx(EvalCommand))
+			{
+				ResultText = EvalCommand.CommandResult;
+				bResultVariableResolved = true;
+			}
 		}
 	}
 
@@ -661,14 +723,26 @@ TSharedPtr<FJsonValue> FEditorHandlers::RunPythonFile(const TSharedPtr<FJsonObje
 	bool bResultVariableResolved = false;
 	if (bSuccess && !ResultVariable.IsEmpty())
 	{
-		FPythonCommandEx EvalCommand;
-		EvalCommand.Command = ResultVariable;
-		EvalCommand.ExecutionMode = EPythonCommandExecutionMode::EvaluateStatement;
-		EvalCommand.FileExecutionScope = EPythonFileExecutionScope::Public;
-		if (PythonPlugin->ExecPythonCommandEx(EvalCommand))
+		FString VariableText;
+		if (EvaluatePythonResultVariable(PythonPlugin, ResultVariable, VariableText))
 		{
-			ResultText = EvalCommand.CommandResult;
+			ResultText = VariableText;
 			bResultVariableResolved = true;
+		}
+		else
+		{
+			// The encoded round trip is the accurate path; a plain evaluation is
+			// kept behind it so a variable it cannot encode still reports
+			// something rather than nothing.
+			FPythonCommandEx EvalCommand;
+			EvalCommand.Command = ResultVariable;
+			EvalCommand.ExecutionMode = EPythonCommandExecutionMode::EvaluateStatement;
+			EvalCommand.FileExecutionScope = EPythonFileExecutionScope::Public;
+			if (PythonPlugin->ExecPythonCommandEx(EvalCommand))
+			{
+				ResultText = EvalCommand.CommandResult;
+				bResultVariableResolved = true;
+			}
 		}
 	}
 

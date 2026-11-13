@@ -87,6 +87,8 @@ public class UE_MCP_Bridge : ModuleRules
 	// Private/Tests/LevelComponentTreeInstanceCountTests.cpp (#986): same reason.
 	// Private/Handlers/LevelHandlers_WorldPartitionSettings.cpp and
 	// Private/Tests/LevelWorldPartitionSettingsTests.cpp (#985): same reason.
+	// Private/Handlers/EditorHandlers_OpenEditors.cpp and
+	// Private/Tests/OpenAssetEditorTests.cpp (#1112): same reason.
 	public UE_MCP_Bridge(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
@@ -225,8 +227,12 @@ public class UE_MCP_Bridge : ModuleRules
 			}
 		);
 
-		// FInstancedStruct moved into CoreUObject in UE 5.5. Earlier engines
-		// still provide it through the StructUtils plugin.
+		// UE 5.4 keeps StructUtils - FInstancedStruct, FStructView, the property
+		// bag - in its own experimental plugin module; 5.5 folded all of it into
+		// CoreUObject. Chooser and StateTreeModule bring its headers along as
+		// public dependencies, so the code compiles on 5.4 without this, and
+		// then fails to link: the symbols live in the module itself. Linked
+		// explicitly below 5.5, where the module no longer exists to link.
 		if (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion < 5)
 		{
 			PrivateDependencyModuleNames.Add("StructUtils");
@@ -244,8 +250,13 @@ public class UE_MCP_Bridge : ModuleRules
 		// import/cache API, guarding those code paths with WITH_FAB_PLUGIN. When
 		// absent, the Fab handlers still register and fall back to console-command
 		// paths (login/sync/clear) or return a clean "not available" error.
-		bool bFabPluginPresent = System.IO.Directory.Exists(
-			System.IO.Path.Combine(EngineDirectory, "Plugins", "Fab"));
+		// Test for the header this module actually includes, not just the
+		// plugin directory: 5.4 ships a Fab plugin whose public surface is
+		// FabModule.h alone, with no Importers/ or Utilities/ headers, so a
+		// directory check turns WITH_FAB_PLUGIN on and the compile then fails
+		// on the missing include.
+		bool bFabPluginPresent = System.IO.File.Exists(System.IO.Path.Combine(
+			EngineDirectory, "Plugins", "Fab", "Source", "Fab", "Public", "Importers", "GenericAssetImporter.h"));
 		if (bFabPluginPresent && Target.bBuildEditor)
 		{
 			PrivateDependencyModuleNames.Add("Fab");
