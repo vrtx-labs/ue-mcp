@@ -472,10 +472,12 @@ TSharedPtr<FJsonValue> MCPUvResolveTarget(const TSharedPtr<FJsonObject>& Params,
 	{
 		Out.Desc = Out.StaticMesh->GetMeshDescription(Out.LodIndex);
 	}
+#if UE_MCP_HAS_5_4_API
 	else if (Out.SkeletalMesh)
 	{
 		Out.Desc = Out.SkeletalMesh->GetMeshDescription(Out.LodIndex);
 	}
+#endif
 #endif
 
 	if (!Out.Desc)
@@ -549,6 +551,7 @@ bool MCPUvCommit(const FMCPUvTarget& Target, bool bRebuild, FString& OutError)
 		Target.StaticMesh->MarkPackageDirty();
 		return true;
 	}
+#if UE_MCP_HAS_5_4_API
 	if (Target.SkeletalMesh)
 	{
 		Target.SkeletalMesh->Modify();
@@ -567,6 +570,7 @@ bool MCPUvCommit(const FMCPUvTarget& Target, bool bRebuild, FString& OutError)
 		Target.SkeletalMesh->MarkPackageDirty();
 		return true;
 	}
+#endif
 #endif
 	OutError = TEXT("no editable mesh description on this asset");
 	return false;

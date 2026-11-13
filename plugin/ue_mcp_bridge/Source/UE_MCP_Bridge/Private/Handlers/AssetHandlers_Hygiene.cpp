@@ -859,7 +859,7 @@ TSharedPtr<FJsonValue> FAssetHandlers::AuditAssetHygiene(const TSharedPtr<FJsonO
 					Registry.GetAssetPackageDataCopy(Data.PackageName);
 				if (PackageData.IsSet() && PackageData->DiskSize > 0)
 				{
-#if WITH_EDITORONLY_DATA
+#if WITH_EDITORONLY_DATA && UE_MCP_HAS_5_4_API
 					const FString Hash = LexToString(PackageData->GetPackageSavedHash());
 #else
 					const FString Hash = TEXT("");

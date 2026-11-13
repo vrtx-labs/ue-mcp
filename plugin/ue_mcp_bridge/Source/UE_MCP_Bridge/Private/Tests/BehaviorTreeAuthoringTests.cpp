@@ -1,4 +1,8 @@
-#if WITH_DEV_AUTOMATION_TESTS
+#include "HandlerUtils.h"
+
+// The fixture builds graph nodes through classes 5.3 does not export, so the
+// suite starts at 5.4. The handlers resolve those classes by path there.
+#if WITH_DEV_AUTOMATION_TESTS && UE_MCP_HAS_5_4_API
 
 // The engine contracts that BehaviorTree graph authoring rests on (#889, #947).
 //

@@ -321,7 +321,7 @@ TSharedPtr<FJsonValue> FEditorHandlers::ValidateAssets(const TSharedPtr<FJsonObj
 		Result->SetStringField(TEXT("directory"), Selection);
 	}
 	Result->SetStringField(TEXT("validationUsecase"), Settings.ValidationUsecase == EDataValidationUsecase::Commandlet ? TEXT("commandlet") : TEXT("manual"));
-#if UE_MCP_BLUEPRINT53_CORE
+#if !UE_MCP_HAS_5_4_API
 	Result->SetNumberField(TEXT("requested"), AssetDataList.Num());
 #else
 	Result->SetNumberField(TEXT("requested"), ValidationResults.NumRequested);
@@ -344,7 +344,7 @@ TSharedPtr<FJsonValue> FEditorHandlers::ValidateAssets(const TSharedPtr<FJsonObj
 	const FString OverallResult = ValidationResults.NumInvalid > 0
 		? TEXT("invalid")
 		: (ValidationResults.NumUnableToValidate > 0
-#if UE_MCP_BLUEPRINT53_CORE
+#if !UE_MCP_HAS_5_4_API
 			|| AssetDataList.Num() == 0
 #else
 			|| ValidationResults.NumRequested == 0
@@ -373,7 +373,7 @@ TSharedPtr<FJsonValue> FEditorHandlers::ValidateAssets(const TSharedPtr<FJsonObj
 		DetailObject->SetStringField(TEXT("result"), MCPDataValidationResultToString(Details->Result));
 		DetailObject->SetArrayField(TEXT("errors"), MCPValidationTextArray(Details->ValidationErrors));
 		DetailObject->SetArrayField(TEXT("warnings"), MCPValidationTextArray(Details->ValidationWarnings));
-#if !UE_MCP_BLUEPRINT53_CORE
+#if UE_MCP_HAS_5_4_API
 		DetailObject->SetArrayField(TEXT("messages"), MCPValidationMessageArray(Details->ValidationMessages));
 #endif
 		DetailsArray.Add(MakeShared<FJsonValueObject>(DetailObject));
@@ -390,7 +390,7 @@ TSharedPtr<FJsonValue> FEditorHandlers::ValidateAssets(const TSharedPtr<FJsonObj
 		TEXT("validatorMessages omitted: cross-asset validator messages need UE 5.8, and this editor is older. Per-asset messages are still reported under assets[].messages."));
 #endif
 	Result->SetStringField(TEXT("message"), FString::Printf(TEXT("Validated %d assets"),
-#if UE_MCP_BLUEPRINT53_CORE
+#if !UE_MCP_HAS_5_4_API
 		AssetDataList.Num()
 #else
 		ValidationResults.NumRequested

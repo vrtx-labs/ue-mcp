@@ -630,7 +630,9 @@ TSharedPtr<FJsonValue> FGameplayHandlers::GetBtRuntime(const TSharedPtr<FJsonObj
 	Result->SetBoolField(TEXT("restartPending"), Comp->IsRestartPending());
 	Result->SetBoolField(TEXT("abortPending"), Comp->IsAbortPending());
 	Result->SetNumberField(TEXT("activeInstanceIdx"), Comp->GetActiveInstanceIdx());
+#if UE_MCP_HAS_5_4_API
 	Result->SetNumberField(TEXT("accumulatedTickDeltaTime"), Comp->GetAccumulatedTickDeltaTime());
+#endif
 
 	UBehaviorTree* CurrentTree = Comp->GetCurrentTree();
 	UBehaviorTree* RootTree = Comp->GetRootTree();

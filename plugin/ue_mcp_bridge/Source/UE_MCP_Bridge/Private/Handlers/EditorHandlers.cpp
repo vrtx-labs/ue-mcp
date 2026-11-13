@@ -258,7 +258,6 @@ void FEditorHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 	Registry.RegisterHandler(TEXT("get_transaction_history"), &GetTransactionHistory);
 	// Insights trace control, frame timing and standalone runs, in
 	// EditorHandlers_Profiling.cpp.
-#if UE_MCP_HAS_5_4_API
 	Registry.RegisterHandler(TEXT("start_insights_trace"), &StartInsightsTrace);
 	Registry.RegisterHandler(TEXT("stop_insights_trace"), &StopInsightsTrace);
 	Registry.RegisterHandler(TEXT("pause_insights_trace"), &PauseInsightsTrace);
@@ -275,7 +274,6 @@ void FEditorHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 	Registry.RegisterHandler(TEXT("launch_standalone_game"), &LaunchStandaloneGame);
 	Registry.RegisterHandler(TEXT("get_standalone_status"), &GetStandaloneStatus);
 	Registry.RegisterHandler(TEXT("stop_standalone_game"), &StopStandaloneGame);
-#endif
 	Registry.RegisterHandler(TEXT("reload_handlers"), &ReloadHandlers);
 	// save_asset is owned by FAssetHandlers (#768: adds force, file size, mtime).
 	// Registering it here too meant the winner was decided by registration
@@ -303,11 +301,7 @@ void FEditorHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 	Registry.RegisterHandler(TEXT("focus_viewport_on_actor"), &FocusViewportOnActor);
 	Registry.RegisterHandler(TEXT("hot_reload"), &HotReload);
 	Registry.RegisterHandler(TEXT("create_new_level"), &CreateNewLevel);
-	// UE 5.3 intentionally omits the modern level registrar. Keep its legacy
-	// save method out of the compact compatibility bridge too.
-#if !UE_MCP_BLUEPRINT53_CORE
 	Registry.RegisterHandler(TEXT("save_current_level"), &SaveCurrentLevel);
-#endif
 	Registry.RegisterHandler(TEXT("open_asset"), &OpenAsset);
 	// #1112: the inverse of open_asset - what is already open, and what has focus.
 	Registry.RegisterHandler(TEXT("get_open_asset_editors"), &GetOpenAssetEditors);
@@ -325,11 +319,7 @@ void FEditorHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 	// #693: headless automation test runner.
 	Registry.RegisterHandlerWithTimeout(TEXT("run_automation_tests"), &RunAutomationTests, 300.0f);
 	// #14: Build project
-	// The TypeScript action builds after stopping the editor, so the old
-	// editor-side route is not reachable in the UE 5.3 compatibility bridge.
-#if !UE_MCP_BLUEPRINT53_CORE
 	Registry.RegisterHandler(TEXT("build_project"), &BuildProject);
-#endif
 	// #49: Generate project files
 	Registry.RegisterHandler(TEXT("generate_project_files"), &GenerateProjectFiles);
 	// #126: fast-forward PIE game time
@@ -2413,7 +2403,7 @@ TSharedPtr<FJsonValue> FEditorHandlers::SetViewportCamera(const TSharedPtr<FJson
 		if (bHasOrthoZoom)
 		{
 				if (!Params->TryGetNumberField(TEXT("orthoZoom"), RequestedOrthoZoom) || !FMath::IsFinite(RequestedOrthoZoom)
-#if UE_MCP_BLUEPRINT53_CORE
+#if !UE_MCP_HAS_5_4_API
 					|| RequestedOrthoZoom <= 0.0)
 #else
 					|| RequestedOrthoZoom < MIN_ORTHOZOOM || RequestedOrthoZoom > MAX_ORTHOZOOM)
@@ -3277,7 +3267,7 @@ namespace
 		TSharedPtr<FJsonObject> Row = MakeShared<FJsonObject>();
 		Row->SetStringField(TEXT("name"), Name);
 		Row->SetStringField(TEXT("value"), CVar->GetString());
-		#if UE_MCP_BLUEPRINT53_CORE
+		#if !UE_MCP_HAS_5_4_API
 		Row->SetStringField(TEXT("defaultValue"), TEXT("(unavailable on UE 5.3)"));
 		Row->SetBoolField(TEXT("isDefault"), false);
 		#else

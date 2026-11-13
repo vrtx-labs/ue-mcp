@@ -54,6 +54,18 @@
 
 #define UE_MCP_HAS_STATIC_FIND_OBJECT_FLAGS (ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 7))
 
+
+/** A node's title as the graph editor lists it. 5.4 added the title-type
+ *  argument; 5.3 has the one title. */
+static FText MCPPcgNodeTitle(const UPCGNode* Node)
+{
+#if UE_MCP_HAS_5_4_API
+	return Node->GetNodeTitle(EPCGNodeTitleType::ListView);
+#else
+	return Node->GetNodeTitle();
+#endif
+}
+
 namespace
 {
 	// #213: shared class lookup. Mirrors AddPCGNode's tolerant resolver - accepts
@@ -273,7 +285,7 @@ TSharedPtr<FJsonValue> FPCGHandlers::ReadPCGGraph(const TSharedPtr<FJsonObject>&
 		if (!Node) continue;
 		TSharedPtr<FJsonObject> NodeObj = MakeShared<FJsonObject>();
 		NodeObj->SetStringField(TEXT("name"), Node->GetName());
-		NodeObj->SetStringField(TEXT("title"), Node->GetNodeTitle(EPCGNodeTitleType::ListView).ToString());
+		NodeObj->SetStringField(TEXT("title"), MCPPcgNodeTitle(Node).ToString());
 		NodeArray.Add(MakeShared<FJsonValueObject>(NodeObj));
 	}
 
@@ -289,7 +301,7 @@ TSharedPtr<FJsonValue> FPCGHandlers::ReadPCGGraph(const TSharedPtr<FJsonObject>&
 		TSharedPtr<FJsonObject> Obj = MakeShared<FJsonObject>();
 		if (!Node) return Obj;
 		Obj->SetStringField(TEXT("name"), Node->GetName());
-		Obj->SetStringField(TEXT("title"), Node->GetNodeTitle(EPCGNodeTitleType::ListView).ToString());
+		Obj->SetStringField(TEXT("title"), MCPPcgNodeTitle(Node).ToString());
 		TArray<TSharedPtr<FJsonValue>> InPins, OutPins;
 		for (const TObjectPtr<UPCGPin>& P : Node->GetInputPins())
 		{
@@ -438,7 +450,7 @@ TSharedPtr<FJsonValue> FPCGHandlers::AddPCGNode(const TSharedPtr<FJsonObject>& P
 	const FString NewNodeName = NewNode->GetName();
 	Result->SetStringField(TEXT("nodeName"), NewNodeName);
 	Result->SetStringField(TEXT("nodeType"), NodeType);
-	Result->SetStringField(TEXT("nodeTitle"), NewNode->GetNodeTitle(EPCGNodeTitleType::ListView).ToString());
+	Result->SetStringField(TEXT("nodeTitle"), MCPPcgNodeTitle(NewNode).ToString());
 
 	// Rollback: remove_pcg_node
 	TSharedPtr<FJsonObject> Payload = MakeShared<FJsonObject>();
@@ -1359,7 +1371,7 @@ TSharedPtr<FJsonValue> FPCGHandlers::ReadPCGNodeSettings(const TSharedPtr<FJsonO
 
 	auto Result = MCPSuccess();
 	Result->SetStringField(TEXT("nodeName"), FoundNode->GetName());
-	Result->SetStringField(TEXT("nodeTitle"), FoundNode->GetNodeTitle(EPCGNodeTitleType::ListView).ToString());
+	Result->SetStringField(TEXT("nodeTitle"), MCPPcgNodeTitle(FoundNode).ToString());
 
 	// Read the settings object properties
 	const UPCGSettings* Settings = FoundNode->GetSettings();
@@ -1661,7 +1673,9 @@ TSharedPtr<FJsonValue> FPCGHandlers::SetStaticMeshSpawnerMeshes(const TSharedPtr
 	WeightedSelector->Modify();
 	WeightedSelector->MeshEntries = MoveTemp(Rebuilt);
 #if WITH_EDITOR
+#if UE_MCP_HAS_5_4_API
 	WeightedSelector->RefreshDisplayNames();
+#endif
 #endif
 
 	SpawnerSettings->Modify();

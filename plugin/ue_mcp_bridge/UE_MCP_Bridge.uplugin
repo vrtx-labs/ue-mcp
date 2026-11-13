@@ -22,7 +22,7 @@
 			"LoadingPhase": "PostConfigInit"
 		},
 		{
-			"Name": "UE_MCP_Bridge53",
+			"Name": "UE_MCP_Bridge",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit"
 		}
@@ -73,8 +73,9 @@
 			"Enabled": true
 		},
 		{
-			"Name": "StructUtils",
-			"Enabled": true
+			"Name": "PropertyBindingUtils",
+			"Enabled": true,
+			"Optional": true
 		},
 		{
 			"Name": "Metasound",

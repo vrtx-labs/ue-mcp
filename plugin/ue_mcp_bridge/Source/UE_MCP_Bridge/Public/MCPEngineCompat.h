@@ -2,7 +2,7 @@
 
 // Engine headers that moved between UE 5.4 and 5.5, in one place.
 //
-// The plugin supports UE 5.4 through 5.8. Several headers this module includes
+// The plugin builds on UE 5.3 through 5.8. Several headers this module includes
 // were relocated in 5.5, when StructUtils graduated from an experimental plugin
 // into CoreUObject and PerPlatformProperties moved out of Engine. A translation
 // unit that hard-codes either spelling compiles on one half of the supported
@@ -10,8 +10,9 @@
 // files failing on 'StructUtils/InstancedStruct.h' before anything else is even
 // attempted.
 //
-// Include this header instead of the moved ones. It is include paths only, no
-// API shims: the types themselves are the same on both sides of the move.
+// Include this header instead of the moved ones. It is include paths and one
+// type alias, no API shims: the types themselves are the same on both sides
+// of each move. 5.3 lays these headers out the way 5.4 does.
 //
 // On 5.4 the StructUtils module comes in transitively: Chooser and
 // StateTreeModule both list it as a public dependency and this module depends
@@ -35,4 +36,15 @@
 #include "StructView.h"
 #include "Engine/UserDefinedStruct.h"
 #include "PerPlatformProperties.h"
+#endif
+
+// EMovieSceneTimeUnit arrived in 5.4, in MovieScene. 5.3 spells the same two
+// values ESequenceTimeUnit, in the SequencerScripting plugin, and its sequencer
+// scripting libraries take that type. One alias, so call sites name the modern
+// enum on every engine.
+#if (ENGINE_MAJOR_VERSION > 5) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4)
+#include "MovieSceneTimeUnit.h"
+#else
+#include "SequenceTimeUnit.h"
+using EMovieSceneTimeUnit = ESequenceTimeUnit;
 #endif

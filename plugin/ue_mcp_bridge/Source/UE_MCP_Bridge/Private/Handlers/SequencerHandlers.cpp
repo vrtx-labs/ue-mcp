@@ -5,7 +5,7 @@
 
 #include "LevelSequenceEditorBlueprintLibrary.h"
 #include "MovieSceneSequencePlayer.h"
-#include "MovieSceneTimeUnit.h"
+#include "MCPEngineCompat.h"
 
 #include "Subsystems/AssetEditorSubsystem.h"
 #if !UE_MCP_HAS_5_5_API
@@ -61,6 +61,17 @@ void FSequencerHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 // ─── #548 sequencer authoring helpers ────────────────────────────────
 namespace
 {
+	/** The open sequencer's playhead, in display-rate frames. 5.4 added the
+	 *  time-unit position API; 5.3 exposes the same value as a whole frame. */
+	double MCPSequencerDisplayFrame()
+	{
+#if UE_MCP_HAS_5_4_API
+		return ULevelSequenceEditorBlueprintLibrary::GetGlobalPosition(EMovieSceneTimeUnit::DisplayRate).Frame.AsDecimal();
+#else
+		return static_cast<double>(ULevelSequenceEditorBlueprintLibrary::GetCurrentTime());
+#endif
+	}
+
 	ULevelSequence* LoadSequence(const TSharedPtr<FJsonObject>& Params, FString& OutPath, FString& OutError)
 	{
 		if (!Params->TryGetStringField(TEXT("sequencePath"), OutPath))
@@ -709,7 +720,7 @@ TSharedPtr<FJsonValue> FSequencerHandlers::SequenceControl(const TSharedPtr<FJso
 	// throws away.
 	const bool bWasPlaying = ULevelSequenceEditorBlueprintLibrary::IsPlaying();
 	const double PreviousFrame =
-		ULevelSequenceEditorBlueprintLibrary::GetGlobalPosition(EMovieSceneTimeUnit::DisplayRate).Frame.AsDecimal();
+		MCPSequencerDisplayFrame();
 
 	if (bPlay)
 	{
@@ -724,8 +735,12 @@ TSharedPtr<FJsonValue> FSequencerHandlers::SequenceControl(const TSharedPtr<FJso
 		// There is no Stop(): pause, then rewind to the start of the playback
 		// range, which is what stopping means to a caller.
 		ULevelSequenceEditorBlueprintLibrary::Pause();
+#if UE_MCP_HAS_5_4_API
 		const FMovieSceneSequencePlaybackParams Rewind(FFrameTime(0), EUpdatePositionMethod::Scrub);
 		ULevelSequenceEditorBlueprintLibrary::SetGlobalPosition(Rewind);
+#else
+		ULevelSequenceEditorBlueprintLibrary::SetCurrentTime(0);
+#endif
 	}
 
 	auto Result = MCPSuccess();
@@ -842,13 +857,18 @@ TSharedPtr<FJsonValue> FSequencerHandlers::ScrubSequence(const TSharedPtr<FJsonO
 	// this action's own 'frame' parameter takes with timeUnit 'display'.
 	const bool bWasPlaying = ULevelSequenceEditorBlueprintLibrary::IsPlaying();
 	const double PreviousDisplayFrame =
-		ULevelSequenceEditorBlueprintLibrary::GetGlobalPosition(EMovieSceneTimeUnit::DisplayRate).Frame.AsDecimal();
+		MCPSequencerDisplayFrame();
 
 	// Pause before scrubbing: a playing sequence moves the playhead again on the
 	// next tick, and the capture would not be at the time that was asked for.
 	ULevelSequenceEditorBlueprintLibrary::Pause();
+#if UE_MCP_HAS_5_4_API
 	const FMovieSceneSequencePlaybackParams ScrubTo(TargetDisplay, EUpdatePositionMethod::Scrub);
 	ULevelSequenceEditorBlueprintLibrary::SetGlobalPosition(ScrubTo, EMovieSceneTimeUnit::DisplayRate);
+#else
+	// 5.3 moves the playhead by whole display-rate frames only.
+	ULevelSequenceEditorBlueprintLibrary::SetCurrentTime(FFrameTime(TargetDisplay).RoundToFrame().Value);
+#endif
 	// Evaluate now instead of on the next tick. The playhead move alone does not
 	// write possessed-actor transforms; the evaluation does, and a capture taken
 	// before it would read the previous frame's world.

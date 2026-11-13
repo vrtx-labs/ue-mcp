@@ -24,18 +24,12 @@
 #include "Misc/ScopeLock.h"
 #include "Misc/Char.h"
 #include "Async/Async.h"
-#include "Handlers/BlueprintHandlers.h"
-#if UE_MCP_BLUEPRINT53_CORE
-#include "Handlers/BlueprintHandlers_Collision.h"
-#include "Handlers/DiffHandlers.h"
-#include "Handlers/EditorHandlers.h"
-#endif
-#if !UE_MCP_BLUEPRINT53_CORE
 #include "Handlers/EditorHandlers.h"
 #include "Handlers/AssetHandlers.h"
 #include "Handlers/AssetHandlers_Geometry.h"
 #include "Handlers/AssetHandlers_MeshBoolean.h"
 #include "Handlers/AssetHandlers_BulkRead.h"
+#include "Handlers/BlueprintHandlers.h"
 #include "Handlers/BlueprintHandlers_Collision.h"
 #include "Handlers/ProjectHandlers.h"
 #include "Handlers/LevelHandlers.h"
@@ -64,7 +58,6 @@
 #include "Handlers/FabHandlers.h"
 #include "Handlers/LockHandlers.h"
 #include "Handlers/DiffHandlers.h"
-#endif
 
 // Platform-specific socket includes
 #if PLATFORM_WINDOWS
@@ -166,14 +159,6 @@ FMCPBridgeServer::FMCPBridgeServer(int32 Port, const FString& InPortSource, bool
 	// an attacker can enable remotely.
 	FMCPParamEcho::Get().SetEnabled(FMCPParamEcho::ResolveEnabledFromEnvironment());
 
-	// The UE 5.3 compatibility module exposes the Blueprint inspection core.
-	// The full module retains the complete category registration below.
-#if UE_MCP_BLUEPRINT53_CORE
-	FBlueprintHandlers::RegisterHandlers(HandlerRegistry);
-	FCollisionQueryHandlers::RegisterHandlers(HandlerRegistry);
-	FDiffHandlers::RegisterHandlers(HandlerRegistry);
-	FEditorHandlers::RegisterHandlers(HandlerRegistry);
-#else
 	// Register core handlers
 	FEditorHandlers::RegisterHandlers(HandlerRegistry);
 	FAssetHandlers::RegisterHandlers(HandlerRegistry);
@@ -211,7 +196,6 @@ FMCPBridgeServer::FMCPBridgeServer(int32 Port, const FString& InPortSource, bool
 	FFabHandlers::RegisterHandlers(HandlerRegistry);
 	FLockHandlers::RegisterHandlers(HandlerRegistry);
 	FDiffHandlers::RegisterHandlers(HandlerRegistry);
-#endif
 }
 
 FMCPBridgeServer::~FMCPBridgeServer()

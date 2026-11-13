@@ -89,7 +89,7 @@ namespace
 		for (FScriptMapHelper::FIterator It = MapHelper.CreateIterator(); It; ++It)
 		{
 			const UInputMappingContext* Context = KeyProp
-				? Cast<UInputMappingContext>(KeyProp->GetObjectPropertyValue(MapHelper.GetKeyPtr(It)))
+				? Cast<UInputMappingContext>(KeyProp->GetObjectPropertyValue(MapHelper.GetKeyPtr(MCPScriptIteratorIndex(It))))
 				: nullptr;
 			if (!Context) continue;
 
@@ -97,7 +97,7 @@ namespace
 			int32 RegistrationCount = 0;
 			if (ValueProp)
 			{
-				void* ValueAddr = MapHelper.GetValuePtr(It);
+				void* ValueAddr = MapHelper.GetValuePtr(MCPScriptIteratorIndex(It));
 				if (FIntProperty* P = CastField<FIntProperty>(ValueProp->Struct->FindPropertyByName(TEXT("Priority"))))
 				{
 					Priority = P->GetPropertyValue_InContainer(ValueAddr);

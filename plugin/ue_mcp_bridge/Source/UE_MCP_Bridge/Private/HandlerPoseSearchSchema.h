@@ -21,6 +21,10 @@
 #include "PoseSearch/PoseSearchSchema.h"
 #include "HandlerUtils.h"
 
+// The 5.3 PoseSearch schema has one skeleton and no roles; the PoseSearch
+// actions report the 5.4 requirement there and nothing includes these helpers.
+#if UE_MCP_HAS_5_4_API
+
 namespace MCPPoseSearch
 {
 	/** The schema's per-role skeletons.
@@ -118,3 +122,5 @@ namespace MCPPoseSearch
 			*DatabasePath, *Problems);
 	}
 }
+
+#endif // UE_MCP_HAS_5_4_API

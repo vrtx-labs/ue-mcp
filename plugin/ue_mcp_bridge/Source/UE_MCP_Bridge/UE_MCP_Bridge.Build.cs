@@ -238,6 +238,22 @@ public class UE_MCP_Bridge : ModuleRules
 			PrivateDependencyModuleNames.Add("StructUtils");
 		}
 
+		// PropertyBindingUtils does not exist on UE 5.3, where StateTree still
+		// owns its property bindings. The descriptor lists the plugin as
+		// optional for the same reason.
+		if (Target.Version.MajorVersion > 5 || Target.Version.MinorVersion >= 4)
+		{
+			PrivateDependencyModuleNames.Add("PropertyBindingUtils");
+		}
+
+		// UE 5.3 keeps the sequencer time-unit enum in SequencerScripting, as
+		// ESequenceTimeUnit. MCPEngineCompat.h aliases it to the 5.4 name and
+		// needs the module for the header.
+		if (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion < 4)
+		{
+			PrivateDependencyModuleNames.Add("SequencerScripting");
+		}
+
 		// LiveCoding is Windows-only (Developer/Windows/LiveCoding)
 		if (Target.Platform == UnrealTargetPlatform.Win64)
 		{

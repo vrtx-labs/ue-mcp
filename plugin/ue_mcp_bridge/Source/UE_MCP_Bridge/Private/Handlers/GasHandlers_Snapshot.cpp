@@ -236,7 +236,15 @@ namespace
 
 		// Which tags are currently blocking ability activation, straight off the
 		// ASC's own container rather than inferred from the abilities.
+#if UE_MCP_HAS_5_4_API
 		MCPGasSnapSetTags(Snap, TEXT("blockedAbilityTags"), ASC->GetBlockedAbilityTags());
+#else
+		{
+			FGameplayTagContainer BlockedTags;
+			ASC->GetBlockedAbilityTags(BlockedTags);
+			MCPGasSnapSetTags(Snap, TEXT("blockedAbilityTags"), BlockedTags);
+		}
+#endif
 
 		if (Adopted.Num() > 0)
 		{

@@ -4306,7 +4306,16 @@ TSharedPtr<FJsonValue> FAssetHandlers::MigrateAssets(const TSharedPtr<FJsonObjec
 	// bPrompt is documented as always false through scripting; setting it would
 	// block the bridge on a modal dialog with nobody to answer it.
 	Options.bPrompt = false;
+#if UE_MCP_HAS_5_4_API
 	Options.bIgnoreDependencies = !bIncludeDeps;
+#else
+	// FMigrationOptions::bIgnoreDependencies is 5.4 and newer; 5.3 always
+	// carries the dependencies along.
+	if (!bIncludeDeps)
+	{
+		return MCPError(TEXT("includeDependencies=false needs UE 5.4, and this editor is older. Migrate with dependencies, or copy the asset files directly."));
+	}
+#endif
 	Options.AssetConflict = OnConflict.Equals(TEXT("overwrite"), ESearchCase::IgnoreCase)
 		? EAssetMigrationConflict::Overwrite
 		: EAssetMigrationConflict::Skip;

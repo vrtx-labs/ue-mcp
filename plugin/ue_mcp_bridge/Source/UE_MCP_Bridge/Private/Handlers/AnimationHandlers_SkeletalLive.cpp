@@ -473,7 +473,12 @@ TSharedPtr<FJsonValue> FAnimationHandlers::PreviewAnimation(const TSharedPtr<FJs
 
 	const EVisibilityBasedAnimTickOption Tick = bEnabled
 		? EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones
+#if UE_MCP_HAS_5_4_API
 		: EVisibilityBasedAnimTickOption::OnlyTickMontagesAndRefreshBonesWhenPlayingMontages;
+#else
+		// 5.3 names the same enumerator OnlyTickMontagesWhenNotRendered.
+		: EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered;
+#endif
 
 	int32 Updated = 0;
 	for (USkeletalMeshComponent* C : Comps)

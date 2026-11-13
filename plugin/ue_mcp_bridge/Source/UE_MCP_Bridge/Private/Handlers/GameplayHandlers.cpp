@@ -1388,7 +1388,11 @@ TSharedPtr<FJsonValue> FGameplayHandlers::GetStateTreeRuntime(const TSharedPtr<F
 	Result->SetStringField(TEXT("component"), STComp->GetName());
 	Result->SetStringField(TEXT("stateTree"), StateTree->GetPathName());
 
+#if UE_MCP_HAS_5_4_API
 	if (InstanceData->Num() == 0)
+#else
+	if (InstanceData->NumStructs() == 0)
+#endif
 	{
 		Result->SetBoolField(TEXT("running"), false);
 		Result->SetStringField(TEXT("note"), TEXT("StateTree instance data not initialized (component not running yet). Start PIE / the component's logic first."));

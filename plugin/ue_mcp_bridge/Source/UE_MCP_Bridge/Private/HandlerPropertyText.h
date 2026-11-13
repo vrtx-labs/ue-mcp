@@ -4,6 +4,7 @@
 #include "UObject/UnrealType.h"
 #include "UObject/PropertyPortFlags.h"
 #include "Misc/OutputDeviceNull.h"
+#include "HandlerUtils.h"
 
 // Structured UE export-text import for container properties (#820).
 //
@@ -178,7 +179,7 @@ namespace MCPPropertyText
 			int32 Total = H.Num();
 			for (FScriptMapHelper::FIterator It = H.CreateIterator(); It; ++It)
 			{
-				Total += CountMapPairs(MapProp->ValueProp, H.GetValuePtr(*It), Depth + 1);
+				Total += CountMapPairs(MapProp->ValueProp, H.GetValuePtr(MCPScriptIteratorIndex(It)), Depth + 1);
 			}
 			return Total;
 		}

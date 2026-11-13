@@ -65,6 +65,28 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AISenseConfig_Hearing.h"
 
+
+/** Whether a sense config starts enabled. 5.4 renamed the accessor. */
+static bool MCPSenseStartsEnabled(const UAISenseConfig* Config)
+{
+#if UE_MCP_HAS_5_4_API
+	return Config->GetStartsEnabled();
+#else
+	return Config->IsEnabled();
+#endif
+}
+
+/** Whether a sense is live on a component. 5.3 has no per-component query,
+ *  so it answers with the config's starting state. */
+static bool MCPSenseEnabled(const UAIPerceptionComponent* Component, const UAISenseConfig* Config)
+{
+#if UE_MCP_HAS_5_4_API
+	return Component->IsSenseEnabled(Config->GetSenseImplementation());
+#else
+	return Config->IsEnabled();
+#endif
+}
+
 namespace
 {
 	// Every helper in this file carries the PerceptionLocal prefix on purpose.
@@ -315,7 +337,9 @@ namespace
 				Row->SetBoolField(TEXT("currentlySensed"), Info->HasAnyCurrentStimulus());
 				Row->SetBoolField(TEXT("remembered"), Info->HasAnyKnownStimulus());
 				Row->SetBoolField(TEXT("isHostile"), Info->bIsHostile != 0);
+#if UE_MCP_HAS_5_4_API
 				Row->SetBoolField(TEXT("isFriendly"), Info->bIsFriendly != 0);
+#endif
 				const bool bEverSensed = Age < FAIStimulus::NeverHappenedAge;
 				Row->SetBoolField(TEXT("everSensed"), bEverSensed);
 				if (bEverSensed)
@@ -483,7 +507,7 @@ namespace
 			// perception failure.
 			Entry->SetBoolField(TEXT("maxAgeMeansNeverExpires"), RawMaxAge == 0.f);
 		}
-		Entry->SetBoolField(TEXT("startsEnabled"), Config->GetStartsEnabled());
+		Entry->SetBoolField(TEXT("startsEnabled"), MCPSenseStartsEnabled(Config));
 
 		const FAISenseID SenseID = Config->GetSenseID();
 		Entry->SetBoolField(TEXT("registered"), SenseID.IsValid());
@@ -606,7 +630,7 @@ TSharedPtr<FJsonValue> FGameplayHandlers::ReadPerception(const TSharedPtr<FJsonO
 			++SenseCount;
 			continue;
 		}
-		if (Config->GetStartsEnabled()) ++EnabledCount;
+		if (MCPSenseStartsEnabled(Config)) ++EnabledCount;
 
 		if (const UAISenseConfig_Sight* Sight = Cast<UAISenseConfig_Sight>(Config))
 		{
@@ -1090,7 +1114,7 @@ TSharedPtr<FJsonValue> FGameplayHandlers::GetPerceivedActors(const TSharedPtr<FJ
 		const UAISenseConfig* Config = *It;
 		if (!Config) continue;
 		const FString Short = PerceptionLocalShortSenseName(Config->GetClass());
-		const bool bEnabled = Component->IsSenseEnabled(Config->GetSenseImplementation());
+		const bool bEnabled = MCPSenseEnabled(Component, Config);
 		if (bEnabled) ++EnabledCount;
 		ConfiguredSenses.Add(FString::Printf(TEXT("%s (%s)"), *Short,
 			bEnabled ? TEXT("enabled") : TEXT("disabled")));
@@ -1181,7 +1205,9 @@ TSharedPtr<FJsonValue> FGameplayHandlers::CheckPerception(const TSharedPtr<FJson
 		float LastAge = FAIStimulus::NeverHappenedAge;
 		const FVector LastKnown = Info->GetLastStimulusLocation(&LastAge);
 		Result->SetBoolField(TEXT("isHostile"), Info->bIsHostile != 0);
+#if UE_MCP_HAS_5_4_API
 		Result->SetBoolField(TEXT("isFriendly"), Info->bIsFriendly != 0);
+#endif
 		if (LastKnown != FAISystem::InvalidLocation)
 		{
 			Result->SetObjectField(TEXT("lastKnownLocation"), PerceptionLocalVectorToJson(LastKnown));
@@ -1209,7 +1235,7 @@ TSharedPtr<FJsonValue> FGameplayHandlers::CheckPerception(const TSharedPtr<FJson
 		Row->SetNumberField(TEXT("index"), SenseIndex);
 		Row->SetStringField(TEXT("senseType"), PerceptionLocalShortSenseName(Config->GetClass()));
 		Row->SetStringField(TEXT("objectPath"), Config->GetPathName());
-		Row->SetBoolField(TEXT("enabled"), Component->IsSenseEnabled(Config->GetSenseImplementation()));
+		Row->SetBoolField(TEXT("enabled"), MCPSenseEnabled(Component, Config));
 
 		const FAISenseID SenseID = Config->GetSenseID();
 		Row->SetBoolField(TEXT("registered"), SenseID.IsValid());
@@ -1459,7 +1485,7 @@ TSharedPtr<FJsonValue> FGameplayHandlers::ReportNoiseEvent(const TSharedPtr<FJso
 		TSharedPtr<FJsonObject> Row = MakeShared<FJsonObject>();
 		Row->SetStringField(TEXT("componentObjectPath"), Listener->GetPathName());
 		Row->SetBoolField(TEXT("senseEnabled"),
-			Listener->IsSenseEnabled(MatchingConfig->GetSenseImplementation()));
+			MCPSenseEnabled(Listener, MatchingConfig));
 		if (AActor* ListenerBody = Listener->GetMutableBodyActor())
 		{
 			Row->SetStringField(TEXT("actorLabel"), ListenerBody->GetActorLabel());

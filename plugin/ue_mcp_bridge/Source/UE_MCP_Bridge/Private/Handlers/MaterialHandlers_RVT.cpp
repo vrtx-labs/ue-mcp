@@ -401,7 +401,9 @@ namespace
 		Result->SetObjectField(TEXT("transform"), XformObj);
 #if WITH_EDITOR
 		Result->SetBoolField(TEXT("snapBoundsToLandscape"), Comp->GetSnapBoundsToLandscape());
+#if UE_MCP_HAS_5_4_API
 		Result->SetNumberField(TEXT("expandBounds"), Comp->GetExpandBounds());
+#endif
 		if (AActor* Align = Comp->GetBoundsAlignActor().Get())
 		{
 			Result->SetStringField(TEXT("boundsAlignActorPath"), Align->GetPathName());
@@ -905,7 +907,12 @@ TSharedPtr<FJsonValue> FMaterialHandlers::SetRvtVolumeBounds(const TSharedPtr<FJ
 	}
 
 #if WITH_EDITOR
+#if UE_MCP_HAS_5_4_API
 	const float Expand = Comp->GetExpandBounds();
+#else
+	// ExpandBounds is 5.4 and newer.
+	const float Expand = 0.0f;
+#endif
 	if (Expand > 0.0f) TargetInFrame = TargetInFrame.ExpandBy(Expand);
 	const bool bSnapRequested = Comp->GetSnapBoundsToLandscape();
 #else

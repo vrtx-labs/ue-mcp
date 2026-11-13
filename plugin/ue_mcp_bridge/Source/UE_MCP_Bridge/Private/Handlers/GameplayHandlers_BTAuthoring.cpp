@@ -83,6 +83,29 @@
 #include "BehaviorTreeGraphNode_Task.h"
 #include "EdGraphSchema_BehaviorTree.h"
 
+// UE 5.3 declares UBehaviorTreeGraphNode and its task, subtree, decorator and
+// service subclasses without an export macro, so anything that needs their
+// StaticClass() - Cast, IsA, NewObject, FGraphNodeCreator - compiles and then
+// fails to link outside BehaviorTreeEditor. The classes are registered like
+// any other, so 5.3 resolves them by path. Everything below goes through
+// these two, and the node type itself is only ever reached by static_cast.
+#if UE_MCP_HAS_5_4_API
+#define MCP_BTA_CLASS(Type) Type::StaticClass()
+#else
+#define MCP_BTA_CLASS(Type) MCPBTAFindEditorClass(TEXT(#Type))
+static UClass* MCPBTAFindEditorClass(const TCHAR* PrefixedName)
+{
+	// Drop the 'U' the C++ name carries and the script path does not.
+	return FindObject<UClass>(nullptr, *(FString(TEXT("/Script/BehaviorTreeEditor.")) + (PrefixedName + 1)));
+}
+#endif
+
+static UBehaviorTreeGraphNode* MCPBTACast(UObject* Object)
+{
+	UClass* const NodeClass = MCP_BTA_CLASS(UBehaviorTreeGraphNode);
+	return Object && NodeClass && Object->IsA(NodeClass) ? static_cast<UBehaviorTreeGraphNode*>(Object) : nullptr;
+}
+
 namespace
 {
 	// Horizontal spacing between siblings. Only the relative order matters to
@@ -139,7 +162,7 @@ namespace
 			for (UEdGraphPin* Link : Links)
 			{
 				if (!Link) continue;
-				if (UBehaviorTreeGraphNode* Child = Cast<UBehaviorTreeGraphNode>(Link->GetOwningNode()))
+				if (UBehaviorTreeGraphNode* Child = MCPBTACast(Link->GetOwningNode()))
 				{
 					Out.Add(Child);
 				}
@@ -217,7 +240,7 @@ namespace
 
 		for (UEdGraphNode* EdNode : Graph->Nodes)
 		{
-			UBehaviorTreeGraphNode* Node = Cast<UBehaviorTreeGraphNode>(EdNode);
+			UBehaviorTreeGraphNode* Node = MCPBTACast(EdNode);
 			if (!Node || Seen.Contains(Node)) continue;
 
 			// An orphan has no walked position, so its category comes from what
@@ -416,11 +439,11 @@ namespace
 		if (Category == TEXT("task"))
 		{
 			return RuntimeClass && RuntimeClass->IsChildOf(UBTTask_RunBehavior::StaticClass())
-				? UBehaviorTreeGraphNode_SubtreeTask::StaticClass()
-				: UBehaviorTreeGraphNode_Task::StaticClass();
+				? MCP_BTA_CLASS(UBehaviorTreeGraphNode_SubtreeTask)
+				: MCP_BTA_CLASS(UBehaviorTreeGraphNode_Task);
 		}
-		if (Category == TEXT("decorator")) return UBehaviorTreeGraphNode_Decorator::StaticClass();
-		if (Category == TEXT("service")) return UBehaviorTreeGraphNode_Service::StaticClass();
+		if (Category == TEXT("decorator")) return MCP_BTA_CLASS(UBehaviorTreeGraphNode_Decorator);
+		if (Category == TEXT("service")) return MCP_BTA_CLASS(UBehaviorTreeGraphNode_Service);
 		return nullptr;
 	}
 
@@ -820,7 +843,7 @@ TSharedPtr<FJsonValue> FGameplayHandlers::AddBTNode(const TSharedPtr<FJsonObject
 	const int32 RequestedIndex = OptionalInt(Params, TEXT("index"), INDEX_NONE);
 
 	if ((Category == TEXT("decorator") || Category == TEXT("service")) &&
-		(Parent->IsA<UBehaviorTreeGraphNode_Decorator>() || Parent->IsA<UBehaviorTreeGraphNode_Service>()))
+		(Parent->IsA(MCP_BTA_CLASS(UBehaviorTreeGraphNode_Decorator)) || Parent->IsA(MCP_BTA_CLASS(UBehaviorTreeGraphNode_Service))))
 	{
 		return MCPError(TEXT(
 			"decorators and services attach to a composite, a task or the root, never to another subnode."));
@@ -842,7 +865,7 @@ TSharedPtr<FJsonValue> FGameplayHandlers::AddBTNode(const TSharedPtr<FJsonObject
 		// A subnode is owned by its parent graph node, not held in Graph->Nodes,
 		// so it is constructed against the graph and handed to AddSubNode, which
 		// does the guid, the instance spawn and the parent bookkeeping.
-		UBehaviorTreeGraphNode* SubNode = NewObject<UBehaviorTreeGraphNode>(Graph, GraphNodeClass);
+		UBehaviorTreeGraphNode* SubNode = static_cast<UBehaviorTreeGraphNode*>(NewObject<UObject>(Graph, GraphNodeClass));
 		SubNode->ClassData = FGraphNodeClassData(RuntimeClass, FString());
 		Parent->AddSubNode(SubNode, Graph);
 		NewNode = SubNode;
@@ -868,8 +891,8 @@ TSharedPtr<FJsonValue> FGameplayHandlers::AddBTNode(const TSharedPtr<FJsonObject
 
 		UBehaviorTreeGraphNode* Created = nullptr;
 		{
-			FGraphNodeCreator<UBehaviorTreeGraphNode> Creator(*Graph);
-			Created = Creator.CreateNode(/*bSelectNewNode*/ false, GraphNodeClass);
+			FGraphNodeCreator<UEdGraphNode> Creator(*Graph);
+			Created = static_cast<UBehaviorTreeGraphNode*>(Creator.CreateNode(/*bSelectNewNode*/ false, GraphNodeClass));
 			if (Created)
 			{
 				// ClassData has to be in place before Finalize: PostPlacedNewNode
@@ -1100,7 +1123,7 @@ TSharedPtr<FJsonValue> FGameplayHandlers::MoveBTNode(const TSharedPtr<FJsonObjec
 
 	if (bIsSubNode)
 	{
-		if (NewParent->IsA<UBehaviorTreeGraphNode_Decorator>() || NewParent->IsA<UBehaviorTreeGraphNode_Service>())
+		if (NewParent->IsA(MCP_BTA_CLASS(UBehaviorTreeGraphNode_Decorator)) || NewParent->IsA(MCP_BTA_CLASS(UBehaviorTreeGraphNode_Service)))
 		{
 			return MCPError(TEXT(
 				"decorators and services attach to a composite, a task or the root, never to another subnode."));
@@ -1346,3 +1369,6 @@ TSharedPtr<FJsonValue> FGameplayHandlers::RemoveBTNode(const TSharedPtr<FJsonObj
 		"structure, ordering and values."));
 	return MCPResult(Result);
 }
+
+// Undefined at the end of the translation unit: the module is a unity build.
+#undef MCP_BTA_CLASS

@@ -23,6 +23,7 @@
 #include "EditorAssetLibrary.h"
 #include "EditorFramework/AssetImportData.h"
 #include "Engine/StaticMesh.h"
+#include "MeshDescription.h"
 #include "Engine/SkeletalMesh.h"
 #include "ClothingAsset.h"
 #include "ClothLODData.h"

@@ -2,6 +2,11 @@
 #include "HandlerRegistry.h"
 #include "HandlerUtils.h"
 #include "HandlerAssetCreate.h"
+
+// The Chooser plugin on 5.3 is an early experimental cut: its table header is
+// engine-internal and it has no Compile, no fallback result and no parameter
+// debug names. The actions stay registered there and report the requirement.
+#if UE_MCP_HAS_5_4_API
 #include "Chooser.h"
 #include "IChooserColumn.h"
 #include "IChooserParameterBase.h"
@@ -894,6 +899,16 @@ TSharedPtr<FJsonValue> FChooserHandlers::DeleteRow(const TSharedPtr<FJsonObject>
 	return MCPError(TEXT("chooser row authoring requires an editor build"));
 #endif
 }
+
+#else
+MCP_HANDLER_NEEDS_ENGINE(FChooserHandlers, Create, "5.4", "Chooser table authoring")
+MCP_HANDLER_NEEDS_ENGINE(FChooserHandlers, Describe, "5.4", "Chooser table authoring")
+MCP_HANDLER_NEEDS_ENGINE(FChooserHandlers, AddColumn, "5.4", "Chooser table authoring")
+MCP_HANDLER_NEEDS_ENGINE(FChooserHandlers, ListRows, "5.4", "Chooser table authoring")
+MCP_HANDLER_NEEDS_ENGINE(FChooserHandlers, AddRow, "5.4", "Chooser table authoring")
+MCP_HANDLER_NEEDS_ENGINE(FChooserHandlers, SetRow, "5.4", "Chooser table authoring")
+MCP_HANDLER_NEEDS_ENGINE(FChooserHandlers, DeleteRow, "5.4", "Chooser table authoring")
+#endif // UE_MCP_HAS_5_4_API
 
 void FChooserHandlers::RegisterHandlers(FMCPHandlerRegistry& Registry)
 {

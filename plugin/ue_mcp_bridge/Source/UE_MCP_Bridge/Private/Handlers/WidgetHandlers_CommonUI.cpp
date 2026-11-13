@@ -164,7 +164,13 @@ static UClass* WCui_CommonClass(const TCHAR* Module, const TCHAR* ClassName)
 
 static bool WCui_PluginLoaded()
 {
+#if UE_MCP_HAS_5_4_API
 	return IPluginManager::Get().FindEnabledPlugin(TEXT("CommonUI")).IsValid();
+#else
+	// FindEnabledPlugin is 5.4 and newer.
+	const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(TEXT("CommonUI"));
+	return Plugin.IsValid() && Plugin->IsEnabled();
+#endif
 }
 
 /** Every widget in the tree, parents before children. */

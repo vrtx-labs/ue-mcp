@@ -33,6 +33,7 @@ namespace
 #include "Components/SkeletalMeshComponent.h"
 #include "ControlRig.h"
 #include "ControlRigSequencerEditorLibrary.h"
+#include "MCPEngineCompat.h"
 #include "EditorAssetLibrary.h"
 #include "Editor.h"
 #include "Engine/Blueprint.h"

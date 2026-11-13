@@ -1494,7 +1494,15 @@ TSharedPtr<FJsonValue> FAnimationHandlers::SetSequenceProperties(const TSharedPt
 		{
 			if (UAnimMontage* Montage = Cast<UAnimMontage>(Loaded))
 			{
+#if UE_MCP_HAS_5_4_API
 				UAnimSequenceBase* FirstRef = Montage->GetFirstAnimReference();
+#else
+				// GetFirstAnimReference is 5.4 and newer; this is what it reads.
+				UAnimSequenceBase* FirstRef =
+					(!Montage->SlotAnimTracks.IsEmpty() && !Montage->SlotAnimTracks[0].AnimTrack.AnimSegments.IsEmpty())
+						? Montage->SlotAnimTracks[0].AnimTrack.AnimSegments[0].GetAnimReference()
+						: nullptr;
+#endif
 				Seq = Cast<UAnimSequence>(FirstRef);
 				if (Seq)
 				{

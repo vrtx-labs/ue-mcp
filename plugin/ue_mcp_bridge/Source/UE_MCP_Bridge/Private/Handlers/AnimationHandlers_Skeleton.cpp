@@ -2200,7 +2200,22 @@ TSharedPtr<FJsonValue> FAnimationHandlers::AuthorBlendProfile(const TSharedPtr<F
 			const FScopedTransaction Transaction(
 				NSLOCTEXT("UE_MCP", "RenameBlendProfile", "Rename Blend Profile"));
 			Skeleton->Modify();
+#if UE_MCP_HAS_5_4_API
 			Renamed = Skeleton->RenameBlendProfile(FName(*ProfileName), FName(*NewName));
+#else
+			// USkeleton::RenameBlendProfile is 5.4 and newer. A blend profile is a
+			// subobject of the skeleton found by name, so renaming the object is
+			// the whole operation.
+			Renamed = Skeleton->GetBlendProfile(FName(*ProfileName));
+			if (Renamed)
+			{
+				Renamed->Modify();
+				if (!Renamed->Rename(*NewName, Skeleton, REN_DontCreateRedirectors))
+				{
+					Renamed = nullptr;
+				}
+			}
+#endif
 			Skeleton->PostEditChange();
 		}
 		if (!Renamed)

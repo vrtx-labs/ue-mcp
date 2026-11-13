@@ -26,11 +26,12 @@
 
 #include <type_traits>
 
-// Engine API version gates. One macro per supported minor version, so a gate reads the
-// same everywhere and nobody writes a second scheme. The supported range is
-// UE 5.4 through 5.8; 5.4 is the floor, which is why UE_MCP_HAS_5_4_API is
-// true for every engine the plugin builds against and exists only so a gate
-// can name the floor explicitly instead of leaving it implied.
+// Engine API version gates. One macro per minor version above the floor, so a gate reads the
+// same everywhere and nobody writes a second scheme. The module builds on
+// UE 5.3 through 5.8. 5.3 is the floor and has no macro of its own:
+// UE_MCP_HAS_5_4_API is false there and true everywhere else, and gates the
+// APIs 5.4 introduced. Where 5.3 cannot do something at all, the handler is
+// defined with MCP_HANDLER_NEEDS_ENGINE so the action still answers.
 #define UE_MCP_HAS_5_4_API ((ENGINE_MAJOR_VERSION > 5) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4))
 
 // True on UE 5.5+ (and any future 6.x). Used to gate APIs introduced in 5.5
@@ -108,6 +109,19 @@ inline bool MCPIsForceDisableNanite(const UStaticMeshComponent* Component)
 #endif
 }
 
+/** The internal index a FScriptMapHelper or FScriptSetHelper iterator stands on,
+ *  which is what GetKeyPtr / GetValuePtr / GetElementPtr take. 5.4 named it
+ *  and deprecated the dereference that 5.3 offers instead. */
+template <typename IteratorType>
+inline int32 MCPScriptIteratorIndex(const IteratorType& It)
+{
+#if UE_MCP_HAS_5_4_API
+	return It.GetInternalIndex();
+#else
+	return *It;
+#endif
+}
+
 // ── Quick result builders ────────────────────────────────────────────────────
 
 /** Return an error response: { success: false, error: "..." } */
@@ -122,6 +136,23 @@ inline TSharedPtr<FJsonValue> MCPError(const FString& Message)
 /** Return a formatted error. Usage: MCPError(FString::Printf(TEXT("Not found: %s"), *Path)) */
 // NOTE: Do not use a variadic template wrapper - UE 5.7's consteval format
 // string validation requires TEXT() literals passed directly to FString::Printf.
+
+/** Define a handler whose engine API does not exist on this engine, so the
+ *  action stays registered and answers with the requirement instead of
+ *  "Unknown method". The real definition sits in the other arm of the same
+ *  version gate:
+ *
+ *      #if UE_MCP_HAS_5_4_API
+ *      TSharedPtr<FJsonValue> FFooHandlers::Bar(...) { ... }
+ *      #else
+ *      MCP_HANDLER_NEEDS_ENGINE(FFooHandlers, Bar, "5.4", "Chooser table authoring")
+ *      #endif
+ */
+#define MCP_HANDLER_NEEDS_ENGINE(HandlerClass, Method, Version, What) \
+	TSharedPtr<FJsonValue> HandlerClass::Method(const TSharedPtr<FJsonObject>&) \
+	{ \
+		return MCPError(TEXT(What " needs UE " Version " or newer, and this editor is older.")); \
+	}
 
 /** Wrap a populated FJsonObject as a FJsonValue (the common return). */
 inline TSharedPtr<FJsonValue> MCPResult(TSharedPtr<FJsonObject> Obj)

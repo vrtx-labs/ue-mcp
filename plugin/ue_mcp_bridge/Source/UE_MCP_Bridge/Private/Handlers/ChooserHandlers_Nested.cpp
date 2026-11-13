@@ -21,6 +21,8 @@
 #include "HandlerRegistry.h"
 #include "HandlerUtils.h"
 
+#if UE_MCP_HAS_5_4_API
+
 #include "UObject/StrongObjectPtr.h"
 
 #include "Chooser.h"
@@ -550,3 +552,8 @@ TSharedPtr<FJsonValue> FChooserHandlers::RemapObjectReferences(const TSharedPtr<
 			   "undo in the editor is the only way back."));
 	return MCPResult(Result);
 }
+
+#else
+MCP_HANDLER_NEEDS_ENGINE(FChooserHandlers, ListObjectReferences, "5.4", "Chooser table authoring")
+MCP_HANDLER_NEEDS_ENGINE(FChooserHandlers, RemapObjectReferences, "5.4", "Chooser table authoring")
+#endif // UE_MCP_HAS_5_4_API

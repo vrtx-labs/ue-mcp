@@ -141,6 +141,7 @@ private:
 };
 #endif
 
+#if UE_MCP_HAS_5_4_API
 static int32 GetPoseSearchAnimationAssetCount(const UPoseSearchDatabase* Database)
 {
 #if UE_MCP_HAS_POSESEARCH_DATABASE_ASSET_API
@@ -301,6 +302,7 @@ static bool AddPoseSearchAnimationAsset(UPoseSearchDatabase* Database, UObject* 
 	return true;
 #endif
 }
+#endif
 
 // ─── State Machine Helpers ────────────────────────────────────────
 
@@ -2120,6 +2122,7 @@ TSharedPtr<FJsonValue> FAnimationHandlers::ReadIKRetargeter(const TSharedPtr<FJs
 // v0.7.15 - PoseSearch (motion matching)
 // ===========================================================================
 
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::CreatePoseSearchDatabase(const TSharedPtr<FJsonObject>& Params)
 {
 	FString Name;
@@ -2204,8 +2207,12 @@ TSharedPtr<FJsonValue> FAnimationHandlers::CreatePoseSearchDatabase(const TShare
 	MCPSetDeleteAssetRollback(Res, Database->GetPathName());
 	return MCPResult(Res);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, CreatePoseSearchDatabase, "5.4", "PoseSearch database authoring")
+#endif
 
 
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::SetPoseSearchSchema(const TSharedPtr<FJsonObject>& Params)
 {
 	FString AssetPath;
@@ -2247,8 +2254,12 @@ TSharedPtr<FJsonValue> FAnimationHandlers::SetPoseSearchSchema(const TSharedPtr<
 	if (!PrevSchemaPath.IsEmpty()) MCPSetRollback(Res, TEXT("set_pose_search_schema"), RbPayload);
 	return MCPResult(Res);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, SetPoseSearchSchema, "5.4", "PoseSearch database authoring")
+#endif
 
 
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::AddPoseSearchSequence(const TSharedPtr<FJsonObject>& Params)
 {
 	FString AssetPath;
@@ -2320,6 +2331,9 @@ TSharedPtr<FJsonValue> FAnimationHandlers::AddPoseSearchSequence(const TSharedPt
 		DroppedClipCount));
 	return MCPResult(Res);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, AddPoseSearchSequence, "5.4", "PoseSearch database authoring")
+#endif
 
 
 // #684: bulk clip-list authoring. Replaces (or appends to) the whole clip list in
@@ -2327,6 +2341,7 @@ TSharedPtr<FJsonValue> FAnimationHandlers::AddPoseSearchSequence(const TSharedPt
 // swap its clips" pipeline step that add_pose_search_sequence can only do one clip
 // at a time. Params: assetPath, clips[] ({sequencePath|asset, mirror?,
 // disableReselection?, sampleStart?, sampleEnd?, enabled?}), clearExisting? (default true).
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::SetPoseSearchClips(const TSharedPtr<FJsonObject>& Params)
 {
 	FString AssetPath;
@@ -2444,8 +2459,12 @@ TSharedPtr<FJsonValue> FAnimationHandlers::SetPoseSearchClips(const TSharedPtr<F
 		DroppedClipCount));
 	return MCPResult(Res);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, SetPoseSearchClips, "5.4", "PoseSearch database authoring")
+#endif
 
 
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::BuildPoseSearchIndex(const TSharedPtr<FJsonObject>& Params)
 {
 	FString AssetPath;
@@ -2489,8 +2508,12 @@ TSharedPtr<FJsonValue> FAnimationHandlers::BuildPoseSearchIndex(const TSharedPtr
 		TEXT("and the index it replaced was derived data too, so it is not addressable to put back. Rebuilding from the restored inputs is the recovery."));
 	return MCPResult(Res);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, BuildPoseSearchIndex, "5.4", "PoseSearch database authoring")
+#endif
 
 
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::ReadPoseSearchDatabase(const TSharedPtr<FJsonObject>& Params)
 {
 	FString AssetPath;
@@ -2571,6 +2594,9 @@ TSharedPtr<FJsonValue> FAnimationHandlers::ReadPoseSearchDatabase(const TSharedP
 
 	return MCPResult(Res);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, ReadPoseSearchDatabase, "5.4", "PoseSearch database authoring")
+#endif
 
 // ─── #701 set_ik_rig_mesh ───────────────────────────────────────────
 // Set the preview/source skeletal mesh on an EXISTING IK Rig.
@@ -2766,6 +2792,7 @@ static TSharedPtr<FJsonObject> CaptureRetargetPosePayload(
 #endif
 
 // ─── #701 auto_align_retarget_pose ──────────────────────────────────
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::AutoAlignRetargetPose(const TSharedPtr<FJsonObject>& Params)
 {
 	FString RetargeterPath;
@@ -2836,6 +2863,9 @@ TSharedPtr<FJsonValue> FAnimationHandlers::AutoAlignRetargetPose(const TSharedPt
 #endif
 	return MCPResult(Result);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, AutoAlignRetargetPose, "5.4", "Retarget pose auto-alignment")
+#endif
 
 // ─── #701 reset_retarget_pose ───────────────────────────────────────
 TSharedPtr<FJsonValue> FAnimationHandlers::ResetRetargetPose(const TSharedPtr<FJsonObject>& Params)

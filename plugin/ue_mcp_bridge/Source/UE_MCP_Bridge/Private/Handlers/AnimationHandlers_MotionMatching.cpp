@@ -132,7 +132,7 @@ static const TMap<FString, int32>& TrajectoryFlagTable()
 	return Table;
 }
 
-#if !UE_MCP_HAS_5_5_API
+#if UE_MCP_HAS_5_4_API && !UE_MCP_HAS_5_5_API
 /** Construct one of the PoseSearch channel classes by its script path. On 5.4
  *  the concrete classes are private to the PoseSearch module, but the UClass is
  *  registered like any other, so the object is created through it. */
@@ -205,6 +205,7 @@ static UAnimGraphNode_Root* FindOutputPoseNode(UEdGraph* Graph)
 	return nullptr;
 }
 
+#if UE_MCP_HAS_5_4_API
 static UAnimGraphNode_MotionMatching* FindMotionMatchingNode(UEdGraph* Graph)
 {
 	for (UEdGraphNode* N : Graph->Nodes)
@@ -213,6 +214,7 @@ static UAnimGraphNode_MotionMatching* FindMotionMatchingNode(UEdGraph* Graph)
 	}
 	return nullptr;
 }
+#endif
 
 // Place a freshly-constructed anim graph node into the graph.
 static void PlaceAnimNode(UEdGraph* Graph, UEdGraphNode* Node, int32 X, int32 Y)
@@ -227,6 +229,7 @@ static void PlaceAnimNode(UEdGraph* Graph, UEdGraphNode* Node, int32 X, int32 Y)
 
 // ─── PoseSearchSchema ─────────────────────────────────────────────────────
 
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::CreatePoseSearchSchema(const TSharedPtr<FJsonObject>& Params)
 {
 	FString Name;
@@ -275,7 +278,11 @@ TSharedPtr<FJsonValue> FAnimationHandlers::CreatePoseSearchSchema(const TSharedP
 	MCPSetDeleteAssetRollback(Res, Schema->GetPathName());
 	return MCPResult(Res);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, CreatePoseSearchSchema, "5.4", "PoseSearch schema and motion matching authoring")
+#endif
 
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::AddPoseSearchSchemaPoseChannel(const TSharedPtr<FJsonObject>& Params)
 {
 	FString AssetPath;
@@ -377,7 +384,11 @@ TSharedPtr<FJsonValue> FAnimationHandlers::AddPoseSearchSchemaPoseChannel(const 
 		TEXT("Recover by rebuilding the schema with animation(create_pose_search_schema) under a new name and re-pointing the database at it with animation(set_pose_search_schema)."));
 	return MCPResult(Res);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, AddPoseSearchSchemaPoseChannel, "5.4", "PoseSearch schema and motion matching authoring")
+#endif
 
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::AddPoseSearchSchemaTrajectoryChannel(const TSharedPtr<FJsonObject>& Params)
 {
 	FString AssetPath;
@@ -464,7 +475,11 @@ TSharedPtr<FJsonValue> FAnimationHandlers::AddPoseSearchSchemaTrajectoryChannel(
 		TEXT("Recover by rebuilding the schema with animation(create_pose_search_schema) under a new name and re-pointing the database at it with animation(set_pose_search_schema)."));
 	return MCPResult(Res);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, AddPoseSearchSchemaTrajectoryChannel, "5.4", "PoseSearch schema and motion matching authoring")
+#endif
 
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::ReadPoseSearchSchema(const TSharedPtr<FJsonObject>& Params)
 {
 	FString AssetPath;
@@ -496,6 +511,9 @@ TSharedPtr<FJsonValue> FAnimationHandlers::ReadPoseSearchSchema(const TSharedPtr
 	Res->SetNumberField(TEXT("channelCount"), Channels.Num());
 	return MCPResult(Res);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, ReadPoseSearchSchema, "5.4", "PoseSearch schema and motion matching authoring")
+#endif
 
 // ─── MirrorDataTable ──────────────────────────────────────────────────────
 
@@ -526,7 +544,9 @@ TSharedPtr<FJsonValue> FAnimationHandlers::CreateMirrorDataTable(const TSharedPt
 	{
 		return MCPError(FString::Printf(TEXT("Unknown mirrorAxis '%s'. Expected X, Y or Z."), *AxisStr));
 	}
+#if UE_MCP_HAS_5_4_API
 	Table->bMirrorRootMotion = OptionalBool(Params, TEXT("mirrorRootMotion"), true);
+#endif
 
 	// Build find/replace expressions. Default matches the UE mannequin (_l <-> _r suffix).
 	auto MethodFromString = [](const FString& M) -> EMirrorFindReplaceMethod::Type
@@ -603,6 +623,7 @@ TSharedPtr<FJsonValue> FAnimationHandlers::ReadMirrorDataTable(const TSharedPtr<
 
 // ─── NormalizationSet ─────────────────────────────────────────────────────
 
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::CreatePoseSearchNormalizationSet(const TSharedPtr<FJsonObject>& Params)
 {
 	FString Name;
@@ -638,9 +659,13 @@ TSharedPtr<FJsonValue> FAnimationHandlers::CreatePoseSearchNormalizationSet(cons
 	MCPSetDeleteAssetRollback(Res, NormSet->GetPathName());
 	return MCPResult(Res);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, CreatePoseSearchNormalizationSet, "5.4", "PoseSearch schema and motion matching authoring")
+#endif
 
 // ─── Database tuning ──────────────────────────────────────────────────────
 
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::SetPoseSearchDatabaseSettings(const TSharedPtr<FJsonObject>& Params)
 {
 	FString AssetPath;
@@ -758,9 +783,13 @@ TSharedPtr<FJsonValue> FAnimationHandlers::SetPoseSearchDatabaseSettings(const T
 #endif
 	return MCPResult(Res);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, SetPoseSearchDatabaseSettings, "5.4", "PoseSearch schema and motion matching authoring")
+#endif
 
 // ─── AnimGraph runtime nodes ──────────────────────────────────────────────
 
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::AddMotionMatchingNode(const TSharedPtr<FJsonObject>& Params)
 {
 	FString AssetPath;
@@ -844,7 +873,11 @@ TSharedPtr<FJsonValue> FAnimationHandlers::AddMotionMatchingNode(const TSharedPt
 	}
 	return MCPResult(Res);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, AddMotionMatchingNode, "5.4", "PoseSearch schema and motion matching authoring")
+#endif
 
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::AddPoseHistoryNode(const TSharedPtr<FJsonObject>& Params)
 {
 	FString AssetPath;
@@ -932,6 +965,9 @@ TSharedPtr<FJsonValue> FAnimationHandlers::AddPoseHistoryNode(const TSharedPtr<F
 	}
 	return MCPResult(Res);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, AddPoseHistoryNode, "5.4", "PoseSearch schema and motion matching authoring")
+#endif
 
 // Drive a Motion Matching node's Database from a ChooserTable, so the database is
 // selected at runtime by the character's state (the whole point of a pose-search
@@ -940,6 +976,7 @@ TSharedPtr<FJsonValue> FAnimationHandlers::AddPoseHistoryNode(const TSharedPtr<F
 // the MM node's Database input pin directly - no anim-node-function graph needed.
 // The chooser's columns are read from the ContextObject; default is the anim
 // instance itself (Self), matching choosers that branch on AnimBP variables.
+#if UE_MCP_HAS_5_4_API
 TSharedPtr<FJsonValue> FAnimationHandlers::SetMotionMatchingChooser(const TSharedPtr<FJsonObject>& Params)
 {
 	FString AssetPath;
@@ -1079,6 +1116,9 @@ TSharedPtr<FJsonValue> FAnimationHandlers::SetMotionMatchingChooser(const TShare
 		TEXT("Recover by deleting the nodes named in evaluateChooserNodeGuid and contextNodeGuid with blueprint(delete_node) and restoring the Database pin by hand."));
 	return MCPResult(Res);
 }
+#else
+MCP_HANDLER_NEEDS_ENGINE(FAnimationHandlers, SetMotionMatchingChooser, "5.4", "PoseSearch schema and motion matching authoring")
+#endif
 
 // ═══ #713 - distance-matching graph authoring ═════════════════════════════
 // Distance matching drives a Sequence Evaluator's explicit time each frame from

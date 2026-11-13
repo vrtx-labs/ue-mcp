@@ -165,7 +165,12 @@ namespace
 		Pending.Add(Root);
 		while (Pending.Num() > 0)
 		{
+#if UE_MCP_HAS_5_4_API
+			USceneComponent* Parent = Pending.Pop(EAllowShrinking::No);
+#else
+			// EAllowShrinking is 5.4 and newer; 5.3 takes the bool it replaced.
 			USceneComponent* Parent = Pending.Pop(false);
+#endif
 			for (USceneComponent* Child : Parent->GetAttachChildren())
 			{
 				if (!Child || ComponentTargets.Contains(Child)) continue;

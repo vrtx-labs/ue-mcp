@@ -47,8 +47,6 @@
 
 #include "HandlerUtils.h"
 
-#if UE_MCP_HAS_5_4_API
-
 #include "Editor.h"
 #include "Editor/EditorEngine.h"
 #include "Editor/EditorPerformanceSettings.h"
@@ -82,6 +80,30 @@
 // Nothing below is copied from another handler file for the same reason.
 namespace
 {
+	// FTraceAuxiliary::IsPaused is 5.4 and newer. 5.3 can pause and resume but
+	// cannot be asked which it did, so the state is the last pause or resume
+	// this module applied, cleared when a trace starts or stops. A pause made
+	// outside the bridge is not visible there.
+#if !UE_MCP_HAS_5_4_API
+	bool GMCPProfilingTracePaused = false;
+#endif
+
+	bool MCPProfilingTracePaused()
+	{
+#if UE_MCP_HAS_5_4_API
+		return FTraceAuxiliary::IsPaused();
+#else
+		return GMCPProfilingTracePaused;
+#endif
+	}
+
+	void MCPProfilingNoteTracePaused(bool bPaused)
+	{
+#if !UE_MCP_HAS_5_4_API
+		GMCPProfilingTracePaused = bPaused;
+#endif
+	}
+
 	// ── Shared state ────────────────────────────────────────────────────────
 	// Both of these outlive a single call by design: a region is a bracket and
 	// a standalone run is a process. Neither is serialised anywhere, so an
@@ -342,7 +364,7 @@ namespace
 	{
 		const bool bConnected = FTraceAuxiliary::IsConnected();
 		Result->SetBoolField(TEXT("tracing"), bConnected);
-		Result->SetBoolField(TEXT("paused"), FTraceAuxiliary::IsPaused());
+		Result->SetBoolField(TEXT("paused"), MCPProfilingTracePaused());
 		Result->SetStringField(TEXT("systemStatus"), MCPProfilingSystemStatusName());
 		Result->SetStringField(TEXT("connectionType"),
 			MCPProfilingConnectionTypeName(FTraceAuxiliary::GetConnectionType()));
@@ -661,6 +683,7 @@ PRAGMA_ENABLE_DEPRECATION_WARNINGS
 	else if (Type == FTraceAuxiliary::EConnectionType::Network)  TargetPtr = *Host;
 
 	const bool bStarted = FTraceAuxiliary::Start(Type, TargetPtr, *Channels, &Options);
+	if (bStarted) MCPProfilingNoteTracePaused(false);
 	if (!bStarted)
 	{
 		return MCPError(FString::Printf(
@@ -727,6 +750,7 @@ TSharedPtr<FJsonValue> FEditorHandlers::StopInsightsTrace(const TSharedPtr<FJson
 	}
 
 	const bool bStopped = FTraceAuxiliary::Stop();
+	if (bStopped) MCPProfilingNoteTracePaused(false);
 
 	TSharedPtr<FJsonObject> Result = MCPSuccess();
 	Result->SetBoolField(TEXT("wasTracing"), true);
@@ -770,7 +794,7 @@ TSharedPtr<FJsonValue> FEditorHandlers::PauseInsightsTrace(const TSharedPtr<FJso
 	MCP_CHECK_GAME_THREAD();
 
 	const bool bWantPaused = OptionalBool(Params, TEXT("paused"), true);
-	const bool bWasPaused = FTraceAuxiliary::IsPaused();
+	const bool bWasPaused = MCPProfilingTracePaused();
 
 	if (bWantPaused == bWasPaused)
 	{
@@ -789,10 +813,11 @@ TSharedPtr<FJsonValue> FEditorHandlers::PauseInsightsTrace(const TSharedPtr<FJso
 			? TEXT("Pause failed. Pausing disables the active channels, so there has to be at least one active channel; start a trace first with editor(start_trace).")
 			: TEXT("Resume failed. Resume re-enables the channel set a previous pause recorded, so there is nothing to resume unless editor(pause_trace) paused this session."));
 	}
+	MCPProfilingNoteTracePaused(bWantPaused);
 
 	TSharedPtr<FJsonObject> Result = MCPSuccess();
 	MCPSetUpdated(Result);
-	Result->SetBoolField(TEXT("paused"), FTraceAuxiliary::IsPaused());
+	Result->SetBoolField(TEXT("paused"), MCPProfilingTracePaused());
 	Result->SetBoolField(TEXT("changed"), true);
 	Result->SetBoolField(TEXT("previouslyPaused"), bWasPaused);
 	MCPProfilingWriteTraceStatus(Result);
@@ -1710,8 +1735,6 @@ TSharedPtr<FJsonValue> FEditorHandlers::StopStandaloneGame(const TSharedPtr<FJso
 		TEXT("Terminating a process cannot be undone. editor(launch_standalone) starts a NEW run rather than restoring this one."));
 	return MCPResult(Result);
 }
-
-#endif // UE_MCP_HAS_5_4_API
 
 // Undefined at the end of the translation unit: the module is a unity build,
 // so a file-scope macro would otherwise leak into every .cpp compiled after
